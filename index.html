@@ -415,40 +415,76 @@
             
             try {
                 const base64Image = await compressAndSend(selectedImage);
+                const tone = document.getElementById('image-tone').value;
+                
+                // 流式请求
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'image',
                         data: base64Image,
-                        tone: document.getElementById('image-tone').value
+                        tone: tone
                     })
                 });
                 
-                // 先检查响应类型
-                const contentType = response.headers.get('content-type');
                 if (!response.ok) {
-                    if (contentType && contentType.includes('text/html')) {
-                        // Vercel返回了HTML错误页面
-                        const text = await response.text();
-                        throw new Error('服务器错误：' + (text.includes('Payload Too Large') ? '图片太大，请压缩后重试' : '请求失败'));
-                    } else {
-                        const data = await response.json();
-                        throw new Error(data.error || data.details || `请求失败: ${response.status}`);
+                    throw new Error(`请求失败: ${response.status}`);
+                }
+                
+                // 清空结果区域，准备流式显示
+                document.getElementById('result-content').textContent = '';
+                document.getElementById('image-description').style.display = 'none';
+                document.getElementById('result-section').classList.add('show');
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullContent = '';
+                let description = '';
+                
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n').filter(line => line.trim());
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const dataStr = line.slice(6);
+                                try {
+                                    const data = JSON.parse(dataStr);
+                                    
+                                    if (data.error) {
+                                        throw new Error(data.error);
+                                    }
+                                    
+                                    if (data.chunk) {
+                                        // 实时显示文案
+                                        fullContent += data.chunk;
+                                        document.getElementById('result-content').textContent = fullContent;
+                                    }
+                                    
+                                    if (data.description && !description) {
+                                        description = data.description;
+                                        const descEl = document.getElementById('image-description');
+                                        descEl.style.display = 'block';
+                                        descEl.innerHTML = '<strong>📷 AI 识别结果：</strong>' + description;
+                                    }
+                                    
+                                    if (data.done && data.success) {
+                                        showStatus('文案生成成功！', 'success');
+                                        return;
+                                    }
+                                } catch (e) {
+                                    // 忽略解析错误
+                                }
+                            }
+                        }
                     }
-                }
-                
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('服务器返回了非JSON响应');
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showResult(data.description, data.copywriting);
-                    showStatus('文案生成成功！', 'success');
-                } else {
-                    throw new Error(data.error || data.details || '生成失败');
+                } finally {
+                    reader.releaseLock();
                 }
             } catch (error) {
                 showStatus(`连接失败: ${error.message}`, 'error');
@@ -473,6 +509,7 @@
             hideStatus();
             
             try {
+                // 流式请求
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -483,30 +520,55 @@
                     })
                 });
                 
-                // 先检查响应类型
-                const contentType = response.headers.get('content-type');
                 if (!response.ok) {
-                    if (contentType && contentType.includes('text/html')) {
-                        // Vercel返回了HTML错误页面
-                        const text = await response.text();
-                        throw new Error('服务器错误：' + (text.includes('Payload Too Large') ? '请求数据太大' : '请求失败'));
-                    } else {
-                        const data = await response.json();
-                        throw new Error(data.error || data.details || `请求失败: ${response.status}`);
+                    throw new Error(`请求失败: ${response.status}`);
+                }
+                
+                // 清空结果区域，准备流式显示
+                document.getElementById('result-content').textContent = '';
+                document.getElementById('image-description').style.display = 'none';
+                document.getElementById('result-section').classList.add('show');
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullContent = '';
+                
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n').filter(line => line.trim());
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const dataStr = line.slice(6);
+                                try {
+                                    const data = JSON.parse(dataStr);
+                                    
+                                    if (data.error) {
+                                        throw new Error(data.error);
+                                    }
+                                    
+                                    if (data.chunk) {
+                                        // 实时显示文案
+                                        fullContent += data.chunk;
+                                        document.getElementById('result-content').textContent = fullContent;
+                                    }
+                                    
+                                    if (data.done && data.success) {
+                                        showStatus('文案生成成功！', 'success');
+                                        return;
+                                    }
+                                } catch (e) {
+                                    // 忽略解析错误
+                                }
+                            }
+                        }
                     }
-                }
-                
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('服务器返回了非JSON响应');
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    showResult(null, data.copywriting);
-                    showStatus('文案生成成功！', 'success');
-                } else {
-                    throw new Error(data.error || data.details || '生成失败');
+                } finally {
+                    reader.releaseLock();
                 }
             } catch (error) {
                 showStatus(`连接失败: ${error.message}`, 'error');

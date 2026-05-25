@@ -1,4 +1,4 @@
-// Vercel Serverless Function - 智谱AI文案生成API
+// Vercel Serverless Function - 智谱AI文案生成API（流式响应版）
 // 部署在 /api/generate
 
 module.exports = async function handler(req, res) {
@@ -32,42 +32,41 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: '服务器配置错误' });
     }
 
-    let result;
+    // 设置流式响应头
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
     if (type === 'image') {
       // 图片模式：data是base64图片
-      result = await callZhipuVisionAPI(data, tone, ZHIPU_API_KEY);
+      await streamZhipuVisionAPI(data, tone, ZHIPU_API_KEY, res);
     } else if (type === 'text') {
       // 文字模式：data是产品描述对象
       const { product, features = '' } = data;
       if (!product) {
-        return res.status(400).json({ error: '请输入产品名称' });
+        res.write(`data: ${JSON.stringify({ error: '请输入产品名称' })}\n\n`);
+        res.end();
+        return;
       }
-      result = await callZhipuTextAPI(product, features, tone, ZHIPU_API_KEY);
+      await streamZhipuTextAPI(product, features, tone, ZHIPU_API_KEY, res);
     } else {
-      return res.status(400).json({ error: 'type参数必须是"image"或"text"' });
+      res.write(`data: ${JSON.stringify({ error: 'type参数必须是"image"或"text"' })}\n\n`);
+      res.end();
     }
-
-    // 返回成功结果
-    return res.status(200).json({
-      success: true,
-      ...result,
-      tone
-    });
 
   } catch (error) {
     console.error('API调用失败:', error);
-    // 确保返回JSON格式
-    return res.status(500).json({ 
+    res.write(`data: ${JSON.stringify({ 
       success: false,
       error: '生成失败', 
       details: error.message 
-    });
+    })}\n\n`);
+    res.end();
   }
 }
 
-// 调用智谱多模态API（图片识别）
-async function callZhipuVisionAPI(imageBase64, tone, apiKey) {
+// 流式调用智谱多模态API（图片识别）
+async function streamZhipuVisionAPI(imageBase64, tone, apiKey, res) {
   const url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
   
   const payload = {
@@ -98,7 +97,8 @@ async function callZhipuVisionAPI(imageBase64, tone, apiKey) {
       }
     ],
     temperature: 0.7,
-    max_tokens: 1000
+    max_tokens: 1000,
+    stream: true  // 启用流式响应
   };
 
   const response = await fetch(url, {
@@ -111,39 +111,88 @@ async function callZhipuVisionAPI(imageBase64, tone, apiKey) {
   });
 
   if (!response.ok) {
-    // 尝试读取错误信息
-    let errorMsg = `智谱API请求失败: ${response.status} ${response.statusText}`;
+    let errorMsg = `智谱API请求失败: ${response.status}`;
     try {
       const errorData = await response.text();
       if (errorData) {
-        // 尝试解析JSON错误
         try {
           const errorJson = JSON.parse(errorData);
           errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
         } catch {
-          // 不是JSON，直接使用文本
           errorMsg = errorData.substring(0, 200);
         }
       }
-    } catch {
-      // 忽略读取错误
-    }
-    throw new Error(errorMsg);
+    } catch {}
+    res.write(`data: ${JSON.stringify({ success: false, error: errorMsg })}\n\n`);
+    res.end();
+    return;
   }
 
-  const result = await response.json();
-  const content = result.choices[0]?.message?.content || '';
+  // 流式转发智谱API的响应
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullContent = '';
 
-  // 解析返回内容（假设格式：描述 + 文案）
-  const lines = content.split('\n').filter(line => line.trim());
-  const description = lines[0] || '图片内容识别';
-  const copywriting = lines.slice(1).join('\n') || content;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-  return { description, copywriting };
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6);
+          if (dataStr === '[DONE]') continue;
+          
+          try {
+            const data = JSON.parse(dataStr);
+            const delta = data.choices[0]?.delta?.content || '';
+            if (delta) {
+              fullContent += delta;
+              // 实时转发给前端
+              res.write(`data: ${JSON.stringify({ 
+                success: true, 
+                chunk: delta,
+                done: false 
+              })}\n\n`);
+            }
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
+    }
+
+    // 解析最终内容
+    const lines = fullContent.split('\n').filter(line => line.trim());
+    const description = lines[0] || '图片内容识别';
+    const copywriting = lines.slice(1).join('\n') || fullContent;
+
+    // 发送最终结果
+    res.write(`data: ${JSON.stringify({
+      success: true,
+      description,
+      copywriting,
+      tone,
+      done: true
+    })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('流式处理失败:', error);
+    res.write(`data: ${JSON.stringify({ 
+      success: false,
+      error: '流式处理失败', 
+      details: error.message 
+    })}\n\n`);
+    res.end();
+  }
 }
 
-// 调用智谱文本API
-async function callZhipuTextAPI(product, features, tone, apiKey) {
+// 流式调用智谱文本API
+async function streamZhipuTextAPI(product, features, tone, apiKey, res) {
   const url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
   
   const prompt = `产品：${product}
@@ -164,7 +213,8 @@ async function callZhipuTextAPI(product, features, tone, apiKey) {
       }
     ],
     temperature: 0.7,
-    max_tokens: 800
+    max_tokens: 800,
+    stream: true  // 启用流式响应
   };
 
   const response = await fetch(url, {
@@ -177,31 +227,77 @@ async function callZhipuTextAPI(product, features, tone, apiKey) {
   });
 
   if (!response.ok) {
-    // 尝试读取错误信息
-    let errorMsg = `智谱API请求失败: ${response.status} ${response.statusText}`;
+    let errorMsg = `智谱API请求失败: ${response.status}`;
     try {
       const errorData = await response.text();
       if (errorData) {
-        // 尝试解析JSON错误
         try {
           const errorJson = JSON.parse(errorData);
           errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
         } catch {
-          // 不是JSON，直接使用文本
           errorMsg = errorData.substring(0, 200);
         }
       }
-    } catch {
-      // 忽略读取错误
-    }
-    throw new Error(errorMsg);
+    } catch {}
+    res.write(`data: ${JSON.stringify({ success: false, error: errorMsg })}\n\n`);
+    res.end();
+    return;
   }
 
-  const result = await response.json();
-  const copywriting = result.choices[0]?.message?.content || '';
+  // 流式转发智谱API的响应
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullContent = '';
 
-  return { 
-    description: `${product}${features ? ` - ${features}` : ''}`,
-    copywriting 
-  };
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(line => line.trim());
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6);
+          if (dataStr === '[DONE]') continue;
+          
+          try {
+            const data = JSON.parse(dataStr);
+            const delta = data.choices[0]?.delta?.content || '';
+            if (delta) {
+              fullContent += delta;
+              // 实时转发给前端
+              res.write(`data: ${JSON.stringify({ 
+                success: true, 
+                chunk: delta,
+                done: false 
+              })}\n\n`);
+            }
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
+    }
+
+    // 发送最终结果
+    res.write(`data: ${JSON.stringify({
+      success: true,
+      description: `${product}${features ? ` - ${features}` : ''}`,
+      copywriting: fullContent,
+      tone,
+      done: true
+    })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('流式处理失败:', error);
+    res.write(`data: ${JSON.stringify({ 
+      success: false,
+      error: '流式处理失败', 
+      details: error.message 
+    })}\n\n`);
+    res.end();
+  }
 }
