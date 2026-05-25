@@ -109,7 +109,24 @@ async function callZhipuVisionAPI(imageBase64, tone, apiKey) {
   });
 
   if (!response.ok) {
-    throw new Error(`智谱API请求失败: ${response.status} ${response.statusText}`);
+    // 尝试读取错误信息
+    let errorMsg = `智谱API请求失败: ${response.status} ${response.statusText}`;
+    try {
+      const errorData = await response.text();
+      if (errorData) {
+        // 尝试解析JSON错误
+        try {
+          const errorJson = JSON.parse(errorData);
+          errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
+        } catch {
+          // 不是JSON，直接使用文本
+          errorMsg = errorData.substring(0, 200);
+        }
+      }
+    } catch {
+      // 忽略读取错误
+    }
+    throw new Error(errorMsg);
   }
 
   const result = await response.json();
@@ -158,7 +175,24 @@ async function callZhipuTextAPI(product, features, tone, apiKey) {
   });
 
   if (!response.ok) {
-    throw new Error(`智谱API请求失败: ${response.status} ${response.statusText}`);
+    // 尝试读取错误信息
+    let errorMsg = `智谱API请求失败: ${response.status} ${response.statusText}`;
+    try {
+      const errorData = await response.text();
+      if (errorData) {
+        // 尝试解析JSON错误
+        try {
+          const errorJson = JSON.parse(errorData);
+          errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
+        } catch {
+          // 不是JSON，直接使用文本
+          errorMsg = errorData.substring(0, 200);
+        }
+      }
+    } catch {
+      // 忽略读取错误
+    }
+    throw new Error(errorMsg);
   }
 
   const result = await response.json();

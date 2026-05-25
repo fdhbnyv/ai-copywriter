@@ -376,37 +376,85 @@
             hideResult();
             hideStatus();
             
-            // 将图片转为base64
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const base64Image = e.target.result.split(',')[1]; // 去掉data:image/...前缀
-                
-                try {
-                    const response = await fetch('/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            type: 'image',
-                            data: base64Image,
-                            tone: document.getElementById('image-tone').value
-                        })
-                    });
+            // 压缩图片并转为base64
+            const compressAndSend = async (imageFile) => {
+                return new Promise((resolve) => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
                     
-                    const data = await response.json();
+                    img.onload = () => {
+                        // 限制最大尺寸为 800px
+                        const maxWidth = 800;
+                        const maxHeight = 800;
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth || height > maxHeight) {
+                            if (width > height) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            } else {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 转为base64，质量80%
+                        const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                        resolve(base64Image);
+                    };
                     
-                    if (response.ok && data.success) {
-                        showResult(data.description, data.copywriting);
-                        showStatus('文案生成成功！', 'success');
-                    } else {
-                        throw new Error(data.error || data.details || '生成失败');
-                    }
-                } catch (error) {
-                    showStatus(`连接失败: ${error.message}`, 'error');
-                } finally {
-                    stopLoading();
-                }
+                    img.src = URL.createObjectURL(imageFile);
+                });
             };
-            reader.readAsDataURL(selectedImage);
+            
+            try {
+                const base64Image = await compressAndSend(selectedImage);
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'image',
+                        data: base64Image,
+                        tone: document.getElementById('image-tone').value
+                    })
+                });
+                
+                // 先检查响应类型
+                const contentType = response.headers.get('content-type');
+                if (!response.ok) {
+                    if (contentType && contentType.includes('text/html')) {
+                        // Vercel返回了HTML错误页面
+                        const text = await response.text();
+                        throw new Error('服务器错误：' + (text.includes('Payload Too Large') ? '图片太大，请压缩后重试' : '请求失败'));
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.error || data.details || `请求失败: ${response.status}`);
+                    }
+                }
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('服务器返回了非JSON响应');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult(data.description, data.copywriting);
+                    showStatus('文案生成成功！', 'success');
+                } else {
+                    throw new Error(data.error || data.details || '生成失败');
+                }
+            } catch (error) {
+                showStatus(`连接失败: ${error.message}`, 'error');
+            } finally {
+                stopLoading();
+            }
         }
         
         // 文字模式：生成文案
@@ -435,13 +483,30 @@
                     })
                 });
                 
+                // 先检查响应类型
+                const contentType = response.headers.get('content-type');
+                if (!response.ok) {
+                    if (contentType && contentType.includes('text/html')) {
+                        // Vercel返回了HTML错误页面
+                        const text = await response.text();
+                        throw new Error('服务器错误：' + (text.includes('Payload Too Large') ? '请求数据太大' : '请求失败'));
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.error || data.details || `请求失败: ${response.status}`);
+                    }
+                }
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('服务器返回了非JSON响应');
+                }
+                
                 const data = await response.json();
                 
-                if (response.ok && data.success) {
+                if (data.success) {
                     showResult(null, data.copywriting);
                     showStatus('文案生成成功！', 'success');
                 } else {
-                    throw new Error(data.error || '生成失败');
+                    throw new Error(data.error || data.details || '生成失败');
                 }
             } catch (error) {
                 showStatus(`连接失败: ${error.message}`, 'error');
