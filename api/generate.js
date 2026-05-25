@@ -144,79 +144,84 @@ async function streamZhipuVisionAPI(imageBase64, tone, apiKey, res) {
       res.write(`data: ${JSON.stringify({ 
         success: false, 
         error: errorMsg,
-        retryable: response.status >= 500  // 服务器错误可重试
+        retryable: response.status >= 500
       })}\n\n`);
       res.end();
       return;
     }
 
-  // 流式转发智谱API的响应
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let fullContent = '';
+    // 流式转发智谱API的响应
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim());
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim());
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const dataStr = line.slice(6);
-          if (dataStr === '[DONE]') continue;
-          
-          try {
-            const data = JSON.parse(dataStr);
-            const delta = data.choices[0]?.delta?.content || '';
-            if (delta) {
-              fullContent += delta;
-              // 实时转发给前端
-              res.write(`data: ${JSON.stringify({ 
-                success: true, 
-                chunk: delta,
-                done: false 
-              })}\n\n`);
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6);
+            if (dataStr === '[DONE]') continue;
+            
+            try {
+              const data = JSON.parse(dataStr);
+              const delta = data.choices[0]?.delta?.content || '';
+              if (delta) {
+                fullContent += delta;
+                res.write(`data: ${JSON.stringify({ 
+                  success: true, 
+                  chunk: delta,
+                  done: false 
+                })}\n\n`);
+              }
+            } catch (e) {
+              // 忽略解析错误
             }
-          } catch (e) {
-            // 忽略解析错误
           }
         }
       }
+
+      const lines = fullContent.split('\n').filter(line => line.trim());
+      const description = lines[0] || '图片内容识别';
+      const copywriting = lines.slice(1).join('\n') || fullContent;
+
+      res.write(`data: ${JSON.stringify({
+        success: true,
+        description,
+        copywriting,
+        tone,
+        done: true
+      })}\n\n`);
+      res.end();
+
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        res.write(`data: ${JSON.stringify({ 
+          success: false,
+          error: '智谱API响应超时，请重试',
+          retryable: true
+        })}\n\n`);
+      } else {
+        res.write(`data: ${JSON.stringify({ 
+          success: false,
+          error: '流式处理失败'
+        })}\n\n`);
+      }
+      res.end();
     }
-
-    // 解析最终内容
-    const lines = fullContent.split('\n').filter(line => line.trim());
-    const description = lines[0] || '图片内容识别';
-    const copywriting = lines.slice(1).join('\n') || fullContent;
-
-    // 发送最终结果
-    res.write(`data: ${JSON.stringify({
-      success: true,
-      description,
-      copywriting,
-      tone,
-      done: true
-    })}\n\n`);
-    res.end();
-
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      res.write(`data: ${JSON.stringify({ 
-        success: false,
-        error: '智谱API响应超时，请重试',
-        retryable: true
-      })}\n\n`);
-    } else {
-      console.error('流式处理失败:', error);
-      res.write(`data: ${JSON.stringify({ 
-        success: false,
-        error: '流式处理失败'
-      })}\n\n`);
-    }
+    const msg = error.name === 'AbortError' ? '智谱API响应超时，请重试' : '无法连接智谱API，请稍后重试';
+    res.write(`data: ${JSON.stringify({ 
+      success: false,
+      error: msg,
+      retryable: true
+    })}\n\n`);
     res.end();
   }
 }
