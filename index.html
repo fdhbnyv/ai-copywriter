@@ -131,6 +131,66 @@
             border-color: #4facfe;
         }
         
+        /* 组合框 */
+        .combo-box {
+            position: relative;
+            display: flex;
+            align-items: stretch;
+        }
+        .combo-box input {
+            padding-right: 42px;
+        }
+        .combo-arrow {
+            position: absolute;
+            right: 2px;
+            top: 2px;
+            bottom: 2px;
+            width: 36px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #666;
+            font-size: 0.7rem;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .combo-arrow:hover {
+            background: #f0f7ff;
+        }
+        .combo-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #4facfe;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .combo-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.15s;
+        }
+        .combo-option:first-child { border-radius: 0; }
+        .combo-option:last-child { border-radius: 0 0 10px 10px; }
+        .combo-option:hover {
+            background: #f0f7ff;
+            color: #4facfe;
+        }
+        .combo-option.selected {
+            background: #e6f2ff;
+            color: #4facfe;
+            font-weight: 600;
+        }
+        
         textarea { min-height: 100px; resize: vertical; }
         
         .btn {
@@ -270,12 +330,16 @@
                 
                 <div class="input-group">
                     <label for="image-tone">文案风格</label>
-                    <select id="image-tone">
-                        <option value="专业商务风">专业商务风</option>
-                        <option value="亲切友好风">亲切友好风</option>
-                        <option value="创意潮流风">创意潮流风</option>
-                        <option value="说服营销风">说服营销风</option>
-                    </select>
+                    <div class="combo-box">
+                        <input type="text" id="image-tone" placeholder="选择或输入自定义风格..." value="专业商务风">
+                        <button class="combo-arrow" type="button" onclick="toggleComboDropdown(this)">▼</button>
+                        <div class="combo-dropdown">
+                            <div class="combo-option selected" onclick="selectComboValue('image-tone', '专业商务风', this)">专业商务风</div>
+                            <div class="combo-option" onclick="selectComboValue('image-tone', '亲切友好风', this)">亲切友好风</div>
+                            <div class="combo-option" onclick="selectComboValue('image-tone', '创意潮流风', this)">创意潮流风</div>
+                            <div class="combo-option" onclick="selectComboValue('image-tone', '说服营销风', this)">说服营销风</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <button class="btn" id="btn-image" onclick="generateFromImage()">
@@ -297,12 +361,16 @@
                 
                 <div class="input-group">
                     <label for="text-tone">文案风格</label>
-                    <select id="text-tone">
-                        <option value="专业商务风">专业商务风</option>
-                        <option value="亲切友好风">亲切友好风</option>
-                        <option value="创意潮流风">创意潮流风</option>
-                        <option value="说服营销风">说服营销风</option>
-                    </select>
+                    <div class="combo-box">
+                        <input type="text" id="text-tone" placeholder="选择或输入自定义风格..." value="专业商务风">
+                        <button class="combo-arrow" type="button" onclick="toggleComboDropdown(this)">▼</button>
+                        <div class="combo-dropdown">
+                            <div class="combo-option selected" onclick="selectComboValue('text-tone', '专业商务风', this)">专业商务风</div>
+                            <div class="combo-option" onclick="selectComboValue('text-tone', '亲切友好风', this)">亲切友好风</div>
+                            <div class="combo-option" onclick="selectComboValue('text-tone', '创意潮流风', this)">创意潮流风</div>
+                            <div class="combo-option" onclick="selectComboValue('text-tone', '说服营销风', this)">说服营销风</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <button class="btn" id="btn-text" onclick="generateFromText()">
@@ -346,6 +414,32 @@
             hideResult();
             hideStatus();
         }
+        
+        // 组合框：切换下拉菜单
+        function toggleComboDropdown(btn) {
+            const dropdown = btn.nextElementSibling;
+            const isOpen = dropdown.style.display === 'block';
+            // 关闭所有其他下拉
+            document.querySelectorAll('.combo-dropdown').forEach(d => d.style.display = 'none');
+            dropdown.style.display = isOpen ? 'none' : 'block';
+        }
+        
+        // 组合框：选择选项
+        function selectComboValue(inputId, value, optionEl) {
+            document.getElementById(inputId).value = value;
+            // 更新选中状态
+            const dropdown = optionEl.parentElement;
+            dropdown.querySelectorAll('.combo-option').forEach(o => o.classList.remove('selected'));
+            optionEl.classList.add('selected');
+            dropdown.style.display = 'none';
+        }
+        
+        // 点击其他地方关闭下拉
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.combo-box')) {
+                document.querySelectorAll('.combo-dropdown').forEach(d => d.style.display = 'none');
+            }
+        });
         
         // 处理图片上传
         function handleImageUpload(event) {
@@ -468,7 +562,7 @@
             
             try {
                 const { base64, sizeInMB } = await compressAndSend(selectedImage);
-                const tone = document.getElementById('image-tone').value;
+                const tone = document.getElementById('image-tone').value || '专业商务风';
                 
                 // 检查图片大小
                 if (sizeInMB > 3.5) {
@@ -571,7 +665,7 @@
         async function generateFromText() {
             const productName = document.getElementById('product-name').value;
             const features = document.getElementById('product-features').value;
-            const tone = document.getElementById('text-tone').value;
+            const tone = document.getElementById('text-tone').value || '专业商务风';
             
             if (!productName.trim()) {
                 showStatus('请输入产品名称', 'error');
