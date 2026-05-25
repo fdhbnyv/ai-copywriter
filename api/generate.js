@@ -1,7 +1,7 @@
 // Vercel Serverless Function - 智谱AI文案生成API
 // 部署在 /api/generate
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -57,7 +57,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('API调用失败:', error);
+    // 确保返回JSON格式
     return res.status(500).json({ 
+      success: false,
       error: '生成失败', 
       details: error.message 
     });
