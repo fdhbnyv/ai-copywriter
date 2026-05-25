@@ -69,6 +69,20 @@ module.exports = async function handler(req, res) {
 async function streamZhipuVisionAPI(imageBase64, tone, apiKey, res) {
   const url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
   
+  // 检查图片大小（base64长度）
+  const imageSizeMB = (imageBase64.length * 0.75) / (1024 * 1024);
+  if (imageSizeMB > 4) {
+    res.write(`data: ${JSON.stringify({ 
+      success: false, 
+      error: `图片太大(${imageSizeMB.toFixed(1)}MB)，请压缩后再试` 
+    })}\n\n`);
+    res.end();
+    return;
+  }
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);  // 30秒超时
+  
   const payload = {
     model: 'glm-4v',
     messages: [
@@ -101,32 +115,40 @@ async function streamZhipuVisionAPI(imageBase64, tone, apiKey, res) {
     stream: true  // 启用流式响应
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
 
-  if (!response.ok) {
-    let errorMsg = `智谱API请求失败: ${response.status}`;
-    try {
-      const errorData = await response.text();
-      if (errorData) {
-        try {
-          const errorJson = JSON.parse(errorData);
-          errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
-        } catch {
-          errorMsg = errorData.substring(0, 200);
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let errorMsg = `智谱API请求失败: ${response.status}`;
+      try {
+        const errorData = await response.text();
+        if (errorData) {
+          try {
+            const errorJson = JSON.parse(errorData);
+            errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
+          } catch {
+            errorMsg = errorData.substring(0, 200);
+          }
         }
-      }
-    } catch {}
-    res.write(`data: ${JSON.stringify({ success: false, error: errorMsg })}\n\n`);
-    res.end();
-    return;
-  }
+      } catch {}
+      res.write(`data: ${JSON.stringify({ 
+        success: false, 
+        error: errorMsg,
+        retryable: response.status >= 500  // 服务器错误可重试
+      })}\n\n`);
+      res.end();
+      return;
+    }
 
   // 流式转发智谱API的响应
   const reader = response.body.getReader();
@@ -181,12 +203,20 @@ async function streamZhipuVisionAPI(imageBase64, tone, apiKey, res) {
     res.end();
 
   } catch (error) {
-    console.error('流式处理失败:', error);
-    res.write(`data: ${JSON.stringify({ 
-      success: false,
-      error: '流式处理失败', 
-      details: error.message 
-    })}\n\n`);
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      res.write(`data: ${JSON.stringify({ 
+        success: false,
+        error: '智谱API响应超时，请重试',
+        retryable: true
+      })}\n\n`);
+    } else {
+      console.error('流式处理失败:', error);
+      res.write(`data: ${JSON.stringify({ 
+        success: false,
+        error: '流式处理失败'
+      })}\n\n`);
+    }
     res.end();
   }
 }
@@ -217,86 +247,112 @@ async function streamZhipuTextAPI(product, features, tone, apiKey, res) {
     stream: true  // 启用流式响应
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    let errorMsg = `智谱API请求失败: ${response.status}`;
-    try {
-      const errorData = await response.text();
-      if (errorData) {
-        try {
-          const errorJson = JSON.parse(errorData);
-          errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
-        } catch {
-          errorMsg = errorData.substring(0, 200);
-        }
-      }
-    } catch {}
-    res.write(`data: ${JSON.stringify({ success: false, error: errorMsg })}\n\n`);
-    res.end();
-    return;
-  }
-
-  // 流式转发智谱API的响应
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let fullContent = '';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim());
+    clearTimeout(timeoutId);
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const dataStr = line.slice(6);
-          if (dataStr === '[DONE]') continue;
-          
+    if (!response.ok) {
+      let errorMsg = `智谱API请求失败: ${response.status}`;
+      try {
+        const errorData = await response.text();
+        if (errorData) {
           try {
-            const data = JSON.parse(dataStr);
-            const delta = data.choices[0]?.delta?.content || '';
-            if (delta) {
-              fullContent += delta;
-              // 实时转发给前端
-              res.write(`data: ${JSON.stringify({ 
-                success: true, 
-                chunk: delta,
-                done: false 
-              })}\n\n`);
+            const errorJson = JSON.parse(errorData);
+            errorMsg = errorJson.error?.message || errorJson.error || errorData.substring(0, 100);
+          } catch {
+            errorMsg = errorData.substring(0, 200);
+          }
+        }
+      } catch {}
+      res.write(`data: ${JSON.stringify({ 
+        success: false, 
+        error: errorMsg,
+        retryable: response.status >= 500
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // 流式转发智谱API的响应
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim());
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6);
+            if (dataStr === '[DONE]') continue;
+            
+            try {
+              const data = JSON.parse(dataStr);
+              const delta = data.choices[0]?.delta?.content || '';
+              if (delta) {
+                fullContent += delta;
+                res.write(`data: ${JSON.stringify({ 
+                  success: true, 
+                  chunk: delta,
+                  done: false 
+                })}\n\n`);
+              }
+            } catch (e) {
+              // 忽略解析错误
             }
-          } catch (e) {
-            // 忽略解析错误
           }
         }
       }
+
+      res.write(`data: ${JSON.stringify({
+        success: true,
+        description: `${product}${features ? ` - ${features}` : ''}`,
+        copywriting: fullContent,
+        tone,
+        done: true
+      })}\n\n`);
+      res.end();
+
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        res.write(`data: ${JSON.stringify({ 
+          success: false,
+          error: '智谱API响应超时，请重试',
+          retryable: true
+        })}\n\n`);
+      } else {
+        res.write(`data: ${JSON.stringify({ 
+          success: false,
+          error: '流式处理失败'
+        })}\n\n`);
+      }
+      res.end();
     }
-
-    // 发送最终结果
-    res.write(`data: ${JSON.stringify({
-      success: true,
-      description: `${product}${features ? ` - ${features}` : ''}`,
-      copywriting: fullContent,
-      tone,
-      done: true
-    })}\n\n`);
-    res.end();
-
   } catch (error) {
-    console.error('流式处理失败:', error);
+    clearTimeout(timeoutId);
+    const msg = error.name === 'AbortError' ? '智谱API响应超时' : '无法连接服务器，请检查网络';
     res.write(`data: ${JSON.stringify({ 
       success: false,
-      error: '流式处理失败', 
-      details: error.message 
+      error: msg,
+      retryable: true
     })}\n\n`);
     res.end();
   }
