@@ -468,6 +468,14 @@
                     </div>
                 </div>
                 
+                <div class="input-group">
+                    <label for="image-hint">补充说明（可选）</label>
+                    <textarea id="image-hint" placeholder="补充图片信息，帮助AI更准确识别。例如：这是新款运动鞋、主打轻便透气、目标人群是跑步爱好者..." rows="3"></textarea>
+                    <div class="hint-text" style="color:#666;font-size:0.85rem;margin-top:4px;">
+                        可补充产品名称、特点、使用场景等，AI会结合图片和文字生成更精准的文案
+                    </div>
+                </div>
+                
                 <button class="btn" id="btn-image" onclick="generateFromImage()">
                     上传图片并生成文案
                 </button>
@@ -715,7 +723,8 @@
             try {
                 const { base64, sizeInMB } = await compressAndSend(selectedImage);
                 const tone = document.getElementById('image-tone').value || '专业商务风';
-                const fullPrompt = `图片模式 | 风格：${tone}`;
+                const hint = document.getElementById('image-hint').value.trim();
+                const fullPrompt = `图片模式 | 风格：${tone}${hint ? ' | 补充：' + hint : ''}`;
                 
                 // 检查图片大小
                 if (sizeInMB > 3.5) {
@@ -727,7 +736,8 @@
                 const response = await streamRequest({
                     type: 'image',
                     data: base64,
-                    tone: tone
+                    tone: tone,
+                    hint: hint || undefined
                 });
                 
                 // 清空结果区域，准备流式显示
