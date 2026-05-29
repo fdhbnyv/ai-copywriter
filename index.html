@@ -948,6 +948,29 @@
         const IG_API_URL = 'https://api.manxiaobai.online/v1/images/generations';
         const IG_API_KEY = 'sk-vqUhgAftHatcXoZ8SPtXe6SByH8Icdx4XTjReoLnqBSW89H0';
         const IG_MODEL = 'gpt-image-2';
+        
+        // 使用代理绕过 CORS（如果直接访问失败）
+        const USE_CORS_PROXY = true;
+        const CORS_PROXY_URL = 'https://api.allorigins.win/raw?url=';
+
+        // 基于 fetch 的通用请求函数，支持 CORS 代理
+        async function igFetch(url, options) {
+            // 先尝试直连
+            try {
+                const res = await fetch(url, options);
+                if (res.ok) return res;
+                // HTTP 错误，非 CORS 问题，直接抛
+                throw res;
+            } catch (err) {
+                // 直连失败，尝试 CORS 代理
+                if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+                    console.log('直连失败，尝试 CORS 代理...');
+                    const proxyUrl = CORS_PROXY_URL + encodeURIComponent(url);
+                    return await fetch(proxyUrl, options);
+                }
+                throw err;
+            }
+        }
 
         function igSizeToPixels(size) {
             const map = { '1:1':'1024x1024', '4:3':'1024x768', '3:4':'768x1024', '16:9':'1792x1024', '9:16':'1024x1792' };
@@ -1037,17 +1060,27 @@
                     reqBody.image = b64;
                 }
 
-                const res = await fetch(IG_API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + IG_API_KEY
-                    },
-                    body: JSON.stringify(reqBody)
-                });
+                let res;
+                
+                try {
+                    res = await igFetch(IG_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + IG_API_KEY
+                        },
+                        body: JSON.stringify(reqBody)
+                    });
+                } catch (fetchErr) {
+                    console.error('Fetch error:', fetchErr);
+                    throw new Error(`网络请求失败：${fetchErr.message}。请检查：\n1. API 地址是否正确\n2. 是否允许跨域(CORS)\n3. 网络连接是否正常`);
+                }
 
                 if (!res.ok) {
-                    const errText = await res.text();
+                    let errText = '';
+                    try {
+                        errText = await res.text();
+                    } catch (_) {}
                     throw new Error(`API 错误(${res.status}): ${errText.substring(0,100)}`);
                 }
 
