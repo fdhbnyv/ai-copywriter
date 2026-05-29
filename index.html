@@ -944,8 +944,8 @@
             el.classList.add('active');
         }
 
-        // 图像生成 API 配置
-        const IG_API_URL = 'https://api.manxiaobai.online/v1/images/generations';
+        // 图像生成 API 配置（通过 Vercel Rewrites 代理，避免 CORS）
+        const IG_API_URL = '/api/generate';
         const IG_API_KEY = 'sk-vqUhgAftHatcXoZ8SPtXe6SByH8Icdx4XTjReoLnqBSW89H0';
         const IG_MODEL = 'gpt-image-2';
 

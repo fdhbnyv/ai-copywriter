@@ -1,12 +1,18 @@
-{
-  "version": 2,
-  "buildCommand": "",
-  "outputDirectory": ".",
-  "cleanUrls": true,
-  "functions": {
-    "api/generate.js": {
-      "maxDuration": 10,
-      "memory": 256
-    }
-  }
+﻿{
+    "version":  2,
+    "buildCommand":  "",
+    "outputDirectory":  ".",
+    "cleanUrls":  true,
+    "functions":  {
+                      "api/generate.js":  {
+                                              "maxDuration":  10,
+                                              "memory":  256
+                                          }
+                  },
+    "rewrites":  [
+                     {
+                         "destination":  "https://api.manxiaobai.online/v1/images/generations",
+                         "source":  "/api/generate"
+                     }
+                 ]
 }
