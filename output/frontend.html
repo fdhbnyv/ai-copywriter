@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI文案生成器 - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .input-section {
+            margin-bottom: 40px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        .result-title {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #4facfe;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .api-info {
+            background: #f0f7ff;
+            border: 1px solid #cce5ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #004085;
+        }
+        
+        .api-info code {
+            background: #e7f1ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI文案生成器</h1>
+            <p>输入产品信息，AI自动生成营销文案</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="product-name">产品名称</label>
+                    <input type="text" id="product-name" placeholder="例如：无线蓝牙耳机、智能手表、有机护肤品...">
+                </div>
+                
+                <div class="input-group">
+                    <label for="product-features">产品特点</label>
+                    <textarea id="product-features" placeholder="描述产品的核心卖点，例如：降噪功能、长续航、轻便设计、防水性能..."></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="tone-style">文案风格</label>
+                    <select id="tone-style">
+                        <option value="professional">专业商务风</option>
+                        <option value="friendly">亲切友好风</option>
+                        <option value="creative">创意潮流风</option>
+                        <option value="persuasive">说服营销风</option>
+                    </select>
+                </div>
+                
+                <button class="btn" id="generate-btn" onclick="generateCopywriting()">
+                    <span>✨ 生成文案</span>
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>AI正在创作中，请稍候...</p>
+            </div>
+            
+            <div class="status" id="status"></div>
+            
+            <div class="result-section" id="result-section">
+                <h3 class="result-title">📝 为您生成的文案</h3>
+                <div class="result-content" id="result-content"></div>
+            </div>
+            
+            <div class="api-info">
+                <strong>技术说明：</strong> 这个Demo通过 <code>fetch()</code> 调用后端API接口 <code>http://localhost:5000/api/generate-text</code>，前端发送JSON数据，后端处理后返回文案结果。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generateCopywriting() {
+            const productName = document.getElementById('product-name').value;
+            const features = document.getElementById('product-features').value;
+            const tone = document.getElementById('tone-style').value;
+            
+            if (!productName.trim()) {
+                showStatus('请输入产品名称', 'error');
+                return;
+            }
+            
+            // 显示加载动画
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('generate-btn').disabled = true;
+            hideStatus();
+            hideResult();
+            
+            try {
+                // 调用后端API
+                const response = await fetch('http://localhost:5000/api/generate-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product: productName,
+                        features: features,
+                        tone: tone
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 显示结果
+                    showResult(data.copywriting);
+                    showStatus('文案生成成功！', 'success');
+                } else {
+                    throw new Error(data.error || '生成失败');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`连接失败: ${error.message}。请确保后端服务已启动。`, 'error');
+            } finally {
+                // 隐藏加载动画
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('generate-btn').disabled = false;
+            }
+        }
+        
+        function showResult(text) {
+            const resultSection = document.getElementById('result-section');
+            const resultContent = document.getElementById('result-content');
+            
+            resultContent.textContent = text;
+            resultSection.classList.add('show');
+        }
+        
+        function hideResult() {
+            document.getElementById('result-section').classList.remove('show');
+        }
+        
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+        
+        function hideStatus() {
+            document.getElementById('status').className = 'status';
+        }
+        
+        // 示例：按回车键触发生成
+        document.getElementById('product-name').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') generateCopywriting();
+        });
+    </script>
+</body>
+</html>
