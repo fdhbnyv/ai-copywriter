@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 工具箱 - 文案生成 & 图像生成</title>
+    <style>
+        /* ========== 全局变量 & 主题 ========== */
+        :root {
+            --bg: #0a0a0f;
+            --bg2: #1a1a2e;
+            --panel-bg: rgba(255,255,255,0.06);
+            --panel-border: rgba(255,255,255,0.08);
+            --text: #e8e8ed;
+            --text2: #8888a0;
+            --accent: #6366f1;
+            --accent2: #8b5cf6;
+            --highlight: #818cf8;
+            --btn-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+            --card-bg: rgba(255,255,255,0.04);
+            --card-hover: rgba(255,255,255,0.08);
+            --input-bg: rgba(255,255,255,0.06);
+            --input-border: rgba(255,255,255,0.1);
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        .light-mode {
+            --bg: #f0f2f5;
+            --bg2: #e8ecf1;
+            --panel-bg: rgba(255,255,255,0.7);
+            --panel-border: rgba(0,0,0,0.06);
+            --text: #1a1a2e;
+            --text2: #6b6b80;
+            --highlight: #6366f1;
+            --card-bg: rgba(0,0,0,0.03);
+            --card-hover: rgba(0,0,0,0.06);
+            --input-bg: rgba(0,0,0,0.03);
+            --input-border: rgba(0,0,0,0.1);
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+            transition: background 0.3s;
+        }
+
+        /* ========== 主标签栏 ========== */
+        .main-nav {
+            display: flex; gap: 6px; padding: 12px 16px;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--panel-border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .main-tab {
+            padding: 8px 18px; border-radius: 20px; cursor: pointer;
+            font-weight: 600; color: var(--text2); border: none;
+            background: transparent; font-size: 0.9rem; transition: all 0.25s;
+        }
+        .main-tab:hover { background: var(--card-hover); color: var(--text); }
+        .main-tab.active { background: var(--accent); color: #fff; }
+
+        /* ========== 文案生成器面板 ========== */
+        .copywriter-panel {
+            display: none; justify-content: center; padding: 24px;
+        }
+        .copywriter-panel.active { display: flex; }
+        .cw-container {
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border); border-radius: 20px;
+            width: 100%; max-width: 800px; overflow: hidden; box-shadow: var(--shadow);
+        }
+        .cw-header {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #fff; padding: 20px; text-align: center;
+        }
+        .cw-header h1 { font-size: 1.6rem; margin-bottom: 4px; }
+        .cw-header p { opacity: 0.9; font-size: 0.9rem; }
+        .cw-content { padding: 32px; }
+        .cw-tab-bar { display: flex; gap: 8px; margin-bottom: 24px; }
+        .cw-tab {
+            padding: 9px 20px; cursor: pointer; font-weight: 600;
+            color: var(--text2); border-radius: 20px; transition: all 0.25s;
+            background: var(--card-bg); border: none; font-size: 0.9rem;
+        }
+        .cw-tab:hover { background: var(--card-hover); }
+        .cw-tab.active { color: #fff; background: #4facfe; }
+        .cw-panel { display: none; }
+        .cw-panel.active { display: block; }
+
+        .cw-upload {
+            border: 2px dashed var(--input-border); border-radius: var(--radius);
+            padding: 36px; text-align: center; cursor: pointer;
+            transition: all 0.3s; margin-bottom: 16px; background: var(--card-bg);
+        }
+        .cw-upload:hover { border-color: #4facfe; background: rgba(79,172,254,0.08); }
+        .cw-upload.has-image { border-style: solid; border-color: #4facfe; padding: 12px; }
+        .cw-upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .cw-upload-text { color: var(--text2); font-size: 0.95rem; }
+        .cw-upload-hint { color: var(--text2); font-size: 0.8rem; margin-top: 6px; opacity: 0.7; }
+        #cw-preview { max-height: 220px; border-radius: var(--radius-sm); display: none; }
+
+        .cw-group { margin-bottom: 16px; }
+        .cw-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text); font-size: 0.9rem; }
+        .cw-group input, .cw-group textarea, .cw-group select {
+            width: 100%; padding: 12px; border: 1px solid var(--input-border);
+            border-radius: var(--radius-sm); font-size: 0.95rem;
+            background: var(--input-bg); color: var(--text);
+            font-family: inherit; transition: border-color 0.3s;
+        }
+        .cw-group input:focus, .cw-group textarea:focus, .cw-group select:focus {
+            outline: none; border-color: #4facfe;
+        }
+        .cw-group textarea { min-height: 90px; resize: vertical; }
+
+        .cw-combo { position: relative; }
+        .cw-combo input { padding-right: 40px; }
+        .cw-combo-arrow {
+            position: absolute; right: 2px; top: 2px; bottom: 2px; width: 36px;
+            border: none; background: transparent; cursor: pointer; color: var(--text2);
+            border-radius: 0 7px 7px 0; font-size: 0.7rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cw-combo-arrow:hover { background: var(--card-hover); }
+        .cw-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--panel-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border); border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            z-index: 100; box-shadow: var(--shadow); display: none;
+        }
+        .cw-dropdown.show { display: block; }
+        .cw-option {
+            padding: 10px 14px; cursor: pointer; font-size: 0.9rem; transition: background 0.15s;
+        }
+        .cw-option:hover { background: var(--card-hover); color: #4facfe; }
+        .cw-option.selected { background: rgba(79,172,254,0.15); color: #4facfe; font-weight: 600; }
+
+        .cw-btn {
+            background: #4facfe; color: #fff; border: none; padding: 14px 28px;
+            border-radius: 50px; font-size: 1.05rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; width: 100%;
+        }
+        .cw-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(79,172,254,0.3); }
+        .cw-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .cw-result {
+            background: var(--card-bg); border-radius: var(--radius); padding: 20px;
+            margin-top: 24px; display: none; border: 1px solid var(--panel-border);
+        }
+        .cw-result.show { display: block; animation: fadeIn 0.4s; }
+        .cw-result-title { color: var(--text); margin-bottom: 12px; font-size: 1.1rem; }
+        .cw-result-content {
+            background: var(--input-bg); border-radius: var(--radius-sm); padding: 16px;
+            border-left: 3px solid #4facfe; line-height: 1.7; white-space: pre-wrap; position: relative;
+        }
+        .cw-img-desc {
+            background: rgba(79,172,254,0.1); border-radius: var(--radius-sm);
+            padding: 10px 14px; margin-bottom: 12px; color: #4facfe; font-size: 0.85rem;
+        }
+        .cw-spinner { width: 40px; height: 40px; border: 3px solid var(--panel-border); border-top-color: #4facfe; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+        .cw-loading { display: none; text-align: center; padding: 20px; }
+        .cw-loading.show { display: block; }
+        .cw-status { text-align: center; padding: 10px; border-radius: var(--radius-sm); margin: 8px 0; display: none; }
+        .cw-status.success { background: rgba(40,167,69,0.15); color: #28a745; display: block; }
+        .cw-status.error { background: rgba(220,53,69,0.15); color: #dc3545; display: block; }
+
+        .cw-history {
+            background: var(--card-bg); border-radius: var(--radius); padding: 16px;
+            margin-top: 20px; display: none; border: 1px solid var(--panel-border);
+        }
+        .cw-history-title { color: var(--text); font-size: 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .cw-history-list { max-height: 260px; overflow-y: auto; }
+        .cw-history-item {
+            background: var(--input-bg); border-radius: var(--radius-sm); padding: 10px 14px;
+            margin-bottom: 6px; display: flex; align-items: center; cursor: pointer;
+            transition: all 0.2s; border-left: 3px solid #4facfe;
+        }
+        .cw-history-item:hover { background: var(--card-hover); transform: translateX(3px); }
+        .cw-history-type { font-size: 1.1rem; margin-right: 10px; width: 24px; text-align: center; }
+        .cw-history-text { flex: 1; color: var(--text2); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cw-history-time { color: var(--text2); font-size: 0.78rem; margin-left: 8px; opacity: 0.7; white-space: nowrap; }
+
+        /* ========== 图像生成器面板 ========== */
+        .ig-panel { display: none; }
+        .ig-panel.active { display: flex; flex-direction: column; height: calc(100vh - 52px); }
+
+        .ig-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; background: var(--panel-bg); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--panel-border); flex-shrink: 0;
+        }
+        .ig-logo { font-size: 1rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .ig-top-actions { display: flex; gap: 8px; }
+        .ig-icon-btn {
+            width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--panel-border);
+            background: var(--card-bg); color: var(--text2); cursor: pointer;
+            font-size: 0.95rem; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .ig-icon-btn:hover { background: var(--card-hover); color: var(--text); }
+
+        .ig-main { display: flex; flex: 1; overflow: hidden; }
+        .ig-left {
+            width: 360px; flex-shrink: 0; background: var(--panel-bg);
+            backdrop-filter: blur(20px); border-right: 1px solid var(--panel-border);
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+        .ig-right {
+            flex: 1; display: flex; flex-direction: column; overflow: hidden;
+            background: transparent;
+        }
+
+        /* 子标签 */
+        .ig-subtabs {
+            display: flex; gap: 4px; padding: 12px 16px;
+            border-bottom: 1px solid var(--panel-border); flex-shrink: 0;
+        }
+        .ig-subtab {
+            flex: 1; padding: 8px 0; border: none; background: transparent;
+            color: var(--text2); cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            border-radius: 6px; transition: all 0.2s; text-align: center;
+        }
+        .ig-subtab:hover { background: var(--card-hover); color: var(--text); }
+        .ig-subtab.active { background: var(--accent); color: #fff; }
+
+        .ig-input-area { padding: 16px; flex: 1; overflow-y: auto; display: none; }
+        .ig-input-area.active { display: block; }
+
+        /* 上传区 */
+        .ig-upload-zone {
+            border: 2px dashed var(--input-border); border-radius: var(--radius);
+            padding: 28px; text-align: center; cursor: pointer; transition: all 0.3s;
+            background: var(--card-bg); margin-bottom: 16px; position: relative;
+        }
+        .ig-upload-zone:hover { border-color: var(--accent); background: rgba(99,102,241,0.06); }
+        .ig-upload-zone.has-image { padding: 10px; }
+        .ig-upload-placeholder { color: var(--text2); }
+        .ig-upload-placeholder .icon { font-size: 2rem; margin-bottom: 8px; }
+        .ig-upload-placeholder .text { font-size: 0.9rem; }
+        .ig-upload-placeholder .hint { font-size: 0.78rem; margin-top: 4px; opacity: 0.6; }
+        .ig-upload-preview { max-height: 180px; border-radius: var(--radius-sm); display: none; }
+        .ig-upload-delete {
+            position: absolute; top: 8px; right: 8px; width: 26px; height: 26px;
+            border-radius: 50%; background: rgba(220,53,69,0.8); color: #fff; border: none;
+            cursor: pointer; font-size: 0.8rem; display: none; align-items: center; justify-content: center;
+        }
+        .ig-upload-zone.has-image .ig-upload-delete { display: flex; }
+
+        .ig-field { margin-bottom: 16px; }
+        .ig-field label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text); font-size: 0.85rem; }
+        .ig-field textarea, .ig-field input[type="text"] {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--input-border);
+            border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text);
+            font-size: 0.9rem; font-family: inherit; resize: vertical;
+        }
+        .ig-field textarea:focus, .ig-field input:focus { outline: none; border-color: var(--accent); }
+        .ig-field textarea { min-height: 70px; }
+
+        /* 风格卡片 */
+        .ig-style-label { font-weight: 600; color: var(--text); font-size: 0.85rem; margin-bottom: 8px; }
+        .ig-style-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scroll-behavior: smooth; }
+        .ig-style-scroll::-webkit-scrollbar { height: 4px; }
+        .ig-style-scroll::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+        .ig-style-card {
+            flex-shrink: 0; width: 72px; text-align: center; cursor: pointer;
+            padding: 8px 4px 6px; border-radius: var(--radius-sm); transition: all 0.2s;
+            border: 2px solid transparent; background: var(--card-bg);
+        }
+        .ig-style-card:hover { background: var(--card-hover); }
+        .ig-style-card.active { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+        .ig-style-thumb {
+            width: 40px; height: 40px; border-radius: 6px; margin: 0 auto 4px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            background: var(--card-hover);
+        }
+        .ig-style-name { font-size: 0.72rem; color: var(--text2); white-space: nowrap; }
+
+        /* 高级选项 */
+        .ig-advanced-toggle {
+            color: var(--accent); cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            padding: 8px 0; user-select: none; margin-top: 8px;
+        }
+        .ig-advanced { display: none; padding: 12px; background: var(--card-bg); border-radius: var(--radius-sm); margin-top: 8px; }
+        .ig-advanced.open { display: block; }
+        .ig-advanced-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .ig-advanced-row label { font-size: 0.82rem; color: var(--text2); }
+        .ig-size-btns { display: flex; gap: 6px; }
+        .ig-size-btn {
+            padding: 4px 10px; border: 1px solid var(--input-border); border-radius: 4px;
+            cursor: pointer; font-size: 0.78rem; color: var(--text2); background: transparent;
+            transition: all 0.2s;
+        }
+        .ig-size-btn:hover { border-color: var(--accent); color: var(--text); }
+        .ig-size-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .ig-stepper { display: flex; align-items: center; gap: 0; }
+        .ig-stepper button {
+            width: 30px; height: 30px; border: 1px solid var(--input-border);
+            background: var(--card-bg); color: var(--text); cursor: pointer;
+            font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+        }
+        .ig-stepper button:first-child { border-radius: 4px 0 0 4px; }
+        .ig-stepper button:last-child { border-radius: 0 4px 4px 0; }
+        .ig-stepper span {
+            width: 36px; height: 30px; border-top: 1px solid var(--input-border);
+            border-bottom: 1px solid var(--input-border); display: flex;
+            align-items: center; justify-content: center; font-size: 0.85rem;
+        }
+        .ig-stepper button:hover { background: var(--card-hover); }
+
+        /* 滑块 */
+        .ig-slider-row { margin-bottom: 14px; }
+        .ig-slider-row .header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .ig-slider-row label { font-size: 0.82rem; color: var(--text2); }
+        .ig-slider-row .val { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+        .ig-slider {
+            -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px;
+            background: var(--input-border); outline: none;
+        }
+        .ig-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+            background: var(--accent); cursor: pointer;
+        }
+        .ig-slider::-moz-range-thumb {
+            width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none;
+        }
+
+        /* 控制类型标签 */
+        .ig-ctrl-type-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+        .ig-ctrl-type {
+            padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.82rem;
+            border: 1px solid var(--input-border); background: transparent; color: var(--text2); transition: all 0.2s;
+        }
+        .ig-ctrl-type:hover { border-color: var(--accent); color: var(--text); }
+        .ig-ctrl-type.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        .ig-generate-btn {
+            width: 100%; padding: 14px; border: none; border-radius: 50px;
+            background: var(--btn-bg); color: #fff; font-size: 1rem; font-weight: 700;
+            cursor: pointer; margin-top: 16px; transition: all 0.2s;
+        }
+        .ig-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.35); }
+        .ig-generate-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* 画布 */
+        .ig-canvas {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; min-height: 0;
+        }
+        .ig-canvas-empty {
+            text-align: center; color: var(--text2); font-size: 0.95rem; opacity: 0.6;
+        }
+        .ig-canvas-empty .icon { font-size: 3rem; margin-bottom: 12px; }
+        .ig-canvas-grid {
+            display: grid; gap: 16px; padding: 24px; max-width: 100%; max-height: 100%;
+        }
+        .ig-canvas-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .ig-canvas-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .ig-canvas-img {
+            border-radius: var(--radius-sm); object-fit: contain; cursor: pointer;
+            background: var(--card-bg); transition: transform 0.2s; max-height: 45vh;
+        }
+        .ig-canvas-img:hover { transform: scale(1.03); }
+        .ig-canvas-loading {
+            display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--text2);
+        }
+        .ig-pulse {
+            width: 50px; height: 50px; border-radius: 50%; background: var(--accent);
+            animation: pulse 1.2s ease-in-out infinite; opacity: 0.4;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.15); opacity: 0.7; }
+        }
+
+        /* 历史横条 */
+        .ig-history-bar {
+            height: 130px; flex-shrink: 0; background: var(--panel-bg);
+            backdrop-filter: blur(20px); border-top: 1px solid var(--panel-border);
+            display: flex; align-items: center; padding: 0 16px; overflow-x: auto; gap: 10px;
+        }
+        .ig-history-bar::-webkit-scrollbar { height: 4px; }
+        .ig-history-bar::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+        .ig-history-bar .empty { color: var(--text2); font-size: 0.85rem; opacity: 0.5; white-space: nowrap; padding: 0 20px; }
+        .ig-history-item {
+            flex-shrink: 0; width: 100px; height: 100px; border-radius: var(--radius-sm);
+            cursor: pointer; overflow: hidden; border: 2px solid transparent;
+            background: var(--card-bg); transition: all 0.15s; position: relative;
+        }
+        .ig-history-item:hover { transform: scale(1.05); border-color: var(--accent); }
+        .ig-history-item.active { border-color: var(--accent); }
+        .ig-history-item img { width: 100%; height: 100%; object-fit: cover; }
+        .ig-history-star {
+            position: absolute; top: 4px; right: 4px; width: 20px; height: 20px;
+            border-radius: 50%; background: rgba(0,0,0,0.5); color: #ffc107; font-size: 0.7rem;
+            display: none; align-items: center; justify-content: center;
+        }
+        .ig-history-item.fav .ig-history-star { display: flex; }
+
+        /* 画布悬浮操作 */
+        .ig-canvas-overlay {
+            position: absolute; top: 12px; right: 12px; display: none; gap: 6px; z-index: 10;
+        }
+        .ig-canvas:hover .ig-canvas-overlay { display: flex; }
+        .ig-canvas-overlay button {
+            width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--panel-border);
+            background: var(--panel-bg); backdrop-filter: blur(10px); color: var(--text);
+            cursor: pointer; font-size: 0.85rem; transition: all 0.15s;
+        }
+        .ig-canvas-overlay button:hover { background: var(--card-hover); }
+
+        /* 动画 */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 响应式 */
+        @media (max-width: 1024px) { .ig-left { width: 300px; } }
+        @media (max-width: 768px) {
+            .ig-main { flex-direction: column; }
+            .ig-left { width: 100%; max-height: 55%; border-right: none; border-bottom: 1px solid var(--panel-border); }
+            .ig-right { flex: 1; }
+            .copywriter-panel { padding: 12px; }
+            .cw-content { padding: 20px; }
+        }
+        @media (max-width: 480px) {
+            .ig-left { max-height: 50%; }
+            .ig-canvas-grid.gap-16 { gap: 8px; padding: 12px; }
+            .ig-history-bar { height: 100px; }
+            .ig-history-item { width: 72px; height: 72px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主标签栏 -->
+    <nav class="main-nav">
+        <button class="main-tab active" onclick="switchMainTab('copywriter')">📝 AI 文案</button>
+        <button class="main-tab" onclick="switchMainTab('imagegen')">🎨 AI 图像生成</button>
+    </nav>
+
+    <!-- ==================== 文案生成器 ==================== -->
+    <div class="copywriter-panel active" id="panel-copywriter">
+        <div class="cw-container">
+            <div class="cw-header">
+                <h1>AI 文案生成器</h1>
+                <p>上传产品图或输入文字，AI 自动生成营销文案</p>
+            </div>
+            <div class="cw-content">
+                <div class="cw-tab-bar">
+                    <button class="cw-tab active" onclick="switchCwTab('image')">📷 图片生成文案</button>
+                    <button class="cw-tab" onclick="switchCwTab('text')">✏️ 文字生成文案</button>
+                </div>
+
+                <!-- 图片模式 -->
+                <div class="cw-panel active" id="cw-panel-image">
+                    <div class="cw-upload" id="cw-upload-area" onclick="document.getElementById('cw-file-input').click()">
+                        <div id="cw-upload-placeholder">
+                            <div class="cw-upload-icon">🖼️</div>
+                            <div class="cw-upload-text">点击上传产品图片</div>
+                            <div class="cw-upload-hint">支持 JPG、PNG、WebP，最大 10MB</div>
+                        </div>
+                        <img id="cw-preview" alt="预览">
+                    </div>
+                    <input type="file" id="cw-file-input" accept="image/*" style="display:none" onchange="handleCwImageUpload(event)">
+                    <div class="cw-group">
+                        <label for="cw-image-tone">文案风格</label>
+                        <div class="cw-combo">
+                            <input type="text" id="cw-image-tone" placeholder="选择或输入自定义风格..." value="专业商务风">
+                            <button class="cw-combo-arrow" onclick="toggleCwCombo(this)">▼</button>
+                            <div class="cw-dropdown">
+                                <div class="cw-option selected" onclick="selectCwCombo('cw-image-tone','专业商务风',this)">专业商务风</div>
+                                <div class="cw-option" onclick="selectCwCombo('cw-image-tone','亲切友好风',this)">亲切友好风</div>
+                                <div class="cw-option" onclick="selectCwCombo('cw-image-tone','创意潮流风',this)">创意潮流风</div>
+                                <div class="cw-option" onclick="selectCwCombo('cw-image-tone','说服营销风',this)">说服营销风</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cw-group">
+                        <label for="cw-image-hint">补充说明（可选）</label>
+                        <textarea id="cw-image-hint" placeholder="补充图片信息，帮助AI更准确识别..." rows="2"></textarea>
+                    </div>
+                    <button class="cw-btn" id="cw-btn-image" onclick="generateCwImage()">上传图片并生成文案</button>
+                </div>
+
+                <!-- 文字模式 -->
+                <div class="cw-panel" id="cw-panel-text">
+                    <div class="cw-group"><label for="cw-product-name">产品名称</label><input type="text" id="cw-product-name" placeholder="例如：无线蓝牙耳机..."></div>
+                    <div class="cw-group"><label for="cw-product-features">产品特点</label><textarea id="cw-product-features" placeholder="描述产品的核心卖点..."></textarea></div>
+                    <div class="cw-group"><label for="cw-target-audience">目标受众</label><input type="text" id="cw-target-audience" placeholder="例如：年轻人、商务人士..."></div>
+                    <div class="cw-group">
+                        <label for="cw-use-platform">使用平台</label>
+                        <select id="cw-use-platform">
+                            <option value="">不限平台</option>
+                            <option value="小红书">小红书</option><option value="朋友圈">朋友圈</option>
+                            <option value="抖音">抖音</option><option value="微博">微博</option>
+                            <option value="电商详情页">电商详情页</option>
+                        </select>
+                    </div>
+                    <div class="cw-group">
+                        <label for="cw-text-tone">文案风格</label>
+                        <div class="cw-combo">
+                            <input type="text" id="cw-text-tone" placeholder="选择或输入自定义风格..." value="专业商务风">
+                            <button class="cw-combo-arrow" onclick="toggleCwCombo(this)">▼</button>
+                            <div class="cw-dropdown">
+                                <div class="cw-option selected" onclick="selectCwCombo('cw-text-tone','专业商务风',this)">专业商务风</div>
+                                <div class="cw-option" onclick="selectCwCombo('cw-text-tone','亲切友好风',this)">亲切友好风</div>
+                                <div class="cw-option" onclick="selectCwCombo('cw-text-tone','创意潮流风',this)">创意潮流风</div>
+                                <div class="cw-option" onclick="selectCwCombo('cw-text-tone','说服营销风',this)">说服营销风</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="cw-btn" id="cw-btn-text" onclick="generateCwText()">生成文案</button>
+                </div>
+
+                <div class="cw-loading" id="cw-loading"><div class="cw-spinner"></div><p id="cw-loading-text">AI 正在创作中...</p></div>
+                <div class="cw-status" id="cw-status"></div>
+                <div class="cw-result" id="cw-result">
+                    <div class="cw-result-title">📝 生成结果</div>
+                    <div class="cw-img-desc" id="cw-img-desc" style="display:none;"></div>
+                    <div class="cw-result-content" id="cw-result-content"></div>
+                </div>
+                <div class="cw-history" id="cw-history">
+                    <div class="cw-history-title"><span>📚 最近生成的文案</span><button onclick="clearCwHistory()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:0.82rem;">🗑️ 清空</button></div>
+                    <div class="cw-history-list" id="cw-history-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== AI 图像生成器 ==================== -->
+    <div class="ig-panel" id="panel-imagegen">
+        <div class="ig-topbar">
+            <span class="ig-logo">AI 图像生成器</span>
+            <div class="ig-top-actions">
+                <button class="ig-icon-btn" id="ig-theme-btn" onclick="toggleIgTheme()" title="切换主题">🌙</button>
+            </div>
+        </div>
+        <div class="ig-main">
+            <!-- 左栏 -->
+            <div class="ig-left">
+                <div class="ig-subtabs">
+                    <button class="ig-subtab active" onclick="switchIgTab('generate')">生成</button>
+                    <button class="ig-subtab" onclick="switchIgTab('style')">风格迁移</button>
+                    <button class="ig-subtab" onclick="switchIgTab('control')">控制图</button>
+                </div>
+
+                <!-- 生成 Tab -->
+                <div class="ig-input-area active" id="ig-area-generate">
+                    <div class="ig-upload-zone" id="ig-upload-gen" onclick="document.getElementById('ig-file-gen').click()">
+                        <div class="ig-upload-placeholder">
+                            <div class="icon">🖼️</div><div class="text">拖拽图片到此处或点击上传</div>
+                            <div class="hint">文生图无需上传，图生图需上传参考图</div>
+                        </div>
+                        <img class="ig-upload-preview" id="ig-preview-gen">
+                        <button class="ig-upload-delete" onclick="clearIgUpload('gen');event.stopPropagation();">✕</button>
+                    </div>
+                    <input type="file" id="ig-file-gen" accept="image/*" style="display:none" onchange="handleIgUpload(event,'gen')">
+                    <div class="ig-field">
+                        <label for="ig-prompt-gen">描述你想要的画面</label>
+                        <textarea id="ig-prompt-gen" placeholder="例如：一只可爱的橘猫坐在窗台上，阳光洒落，温暖氛围..." rows="3"></textarea>
+                    </div>
+                    <div class="ig-style-label">风格</div>
+                    <div class="ig-style-scroll" id="ig-styles-gen"></div>
+                    <div class="ig-advanced-toggle" onclick="toggleIgAdvanced('gen')">▶ 高级选项</div>
+                    <div class="ig-advanced" id="ig-advanced-gen">
+                        <div class="ig-advanced-row">
+                            <label>尺寸</label>
+                            <div class="ig-size-btns" id="ig-sizes-gen"></div>
+                        </div>
+                        <div class="ig-advanced-row">
+                            <label>生成数量</label>
+                            <div class="ig-stepper">
+                                <button onclick="stepIgCount('gen',-1)">−</button>
+                                <span id="ig-count-gen">4</span>
+                                <button onclick="stepIgCount('gen',1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="ig-generate-btn" id="ig-btn-gen" onclick="igGenerate('gen')">✨ 开始生成</button>
+                </div>
+
+                <!-- 风格迁移 Tab -->
+                <div class="ig-input-area" id="ig-area-style">
+                    <div class="ig-upload-zone" id="ig-upload-style" onclick="document.getElementById('ig-file-style').click()">
+                        <div class="ig-upload-placeholder">
+                            <div class="icon">🖼️</div><div class="text">拖拽原图到此处或点击上传</div><div class="hint">需要上传一张图片</div>
+                        </div>
+                        <img class="ig-upload-preview" id="ig-preview-style">
+                        <button class="ig-upload-delete" onclick="clearIgUpload('style');event.stopPropagation();">✕</button>
+                    </div>
+                    <input type="file" id="ig-file-style" accept="image/*" style="display:none" onchange="handleIgUpload(event,'style')">
+                    <div class="ig-style-label">目标风格</div>
+                    <div class="ig-style-scroll" id="ig-styles-style"></div>
+                    <div class="ig-advanced-toggle" onclick="toggleIgAdvanced('style')">▶ 高级选项</div>
+                    <div class="ig-advanced" id="ig-advanced-style">
+                        <div class="ig-slider-row">
+                            <div class="header"><label>风格强度</label><span class="val" id="ig-val-strength">80%</span></div>
+                            <input type="range" class="ig-slider" min="0" max="100" value="80" oninput="updateIgSlider('strength',this.value)">
+                        </div>
+                        <div class="ig-slider-row">
+                            <div class="header"><label>保留细节</label><span class="val" id="ig-val-detail">60%</span></div>
+                            <input type="range" class="ig-slider" min="0" max="100" value="60" oninput="updateIgSlider('detail',this.value)">
+                        </div>
+                    </div>
+                    <button class="ig-generate-btn" id="ig-btn-style" onclick="igGenerate('style')">🎨 开始迁移</button>
+                </div>
+
+                <!-- 控制图 Tab -->
+                <div class="ig-input-area" id="ig-area-control">
+                    <div class="ig-ctrl-type-row">
+                        <button class="ig-ctrl-type active" onclick="selectIgCtrl('pose',this)">姿势</button>
+                        <button class="ig-ctrl-type" onclick="selectIgCtrl('canny',this)">线稿</button>
+                        <button class="ig-ctrl-type" onclick="selectIgCtrl('depth',this)">深度</button>
+                        <button class="ig-ctrl-type" onclick="selectIgCtrl('edge',this)">边缘</button>
+                    </div>
+                    <div class="ig-upload-zone" id="ig-upload-ctrl" onclick="document.getElementById('ig-file-ctrl').click()">
+                        <div class="ig-upload-placeholder">
+                            <div class="icon">📐</div><div class="text">拖拽参考图到此处或点击上传</div>
+                        </div>
+                        <img class="ig-upload-preview" id="ig-preview-ctrl">
+                        <button class="ig-upload-delete" onclick="clearIgUpload('ctrl');event.stopPropagation();">✕</button>
+                    </div>
+                    <input type="file" id="ig-file-ctrl" accept="image/*" style="display:none" onchange="handleIgUpload(event,'ctrl')">
+                    <div class="ig-field">
+                        <label for="ig-prompt-ctrl">描述想要的画面内容（可选）</label>
+                        <textarea id="ig-prompt-ctrl" placeholder="例如：一位舞者在霓虹灯下起舞..." rows="2"></textarea>
+                    </div>
+                    <div class="ig-style-label">风格</div>
+                    <div class="ig-style-scroll" id="ig-styles-ctrl"></div>
+                    <div class="ig-advanced-toggle" onclick="toggleIgAdvanced('ctrl')">▶ 高级选项</div>
+                    <div class="ig-advanced" id="ig-advanced-ctrl">
+                        <div class="ig-slider-row">
+                            <div class="header"><label>控制强度</label><span class="val" id="ig-val-ctrl-strength">50%</span></div>
+                            <input type="range" class="ig-slider" min="0" max="100" value="50" oninput="updateIgSlider('ctrl-strength',this.value)">
+                        </div>
+                    </div>
+                    <button class="ig-generate-btn" id="ig-btn-ctrl" onclick="igGenerate('ctrl')">🔧 开始生成</button>
+                </div>
+            </div>
+
+            <!-- 右栏 -->
+            <div class="ig-right">
+                <div class="ig-canvas" id="ig-canvas">
+                    <div class="ig-canvas-empty">
+                        <div class="icon">🎨</div>
+                        <div>输入描述或上传图片，开始创作</div>
+                    </div>
+                </div>
+                <div class="ig-history-bar" id="ig-history-bar">
+                    <span class="empty">生成后历史记录将出现在这里</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== 全局 =====================
+        let igTheme = 'dark';
+        let igHistory = [];
+        let igActiveCanvasImg = null;
+
+        const IG_STYLES_GENERATE = [
+            { name:'自动', icon:'🎲' }, { name:'写实', icon:'📷' }, { name:'动漫', icon:'🎌' },
+            { name:'水彩', icon:'🎨' }, { name:'油画', icon:'🖌️' }, { name:'素描', icon:'✏️' },
+            { name:'赛博朋克', icon:'🤖' }, { name:'像素风', icon:'👾' }, { name:'3D渲染', icon:'💎' },
+            { name:'浮世绘', icon:'🌊' }, { name:'极简插画', icon:'✨' }
+        ];
+        const IG_STYLES_ART = [
+            { name:'梵高', icon:'🌻' }, { name:'莫奈', icon:'🌸' }, { name:'浮世绘', icon:'🌊' },
+            { name:'赛博朋克', icon:'🤖' }, { name:'毕加索', icon:'🎭' }, { name:'波普', icon:'💥' },
+            { name:'水墨', icon:'🖋️' }, { name:'哥特', icon:'🦇' }
+        ];
+        const IG_SIZES = ['1:1','4:3','3:4','16:9','9:16'];
+
+        function switchMainTab(tab) {
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('panel-copywriter').classList.remove('active');
+            document.getElementById('panel-imagegen').classList.remove('active');
+            if (tab === 'copywriter') {
+                document.querySelectorAll('.main-tab')[0].classList.add('active');
+                document.getElementById('panel-copywriter').classList.add('active');
+            } else {
+                document.querySelectorAll('.main-tab')[1].classList.add('active');
+                document.getElementById('panel-imagegen').classList.add('active');
+            }
+        }
+
+        // ===================== 文案生成器 JS =====================
+        let cwSelectedImage = null;
+
+        function switchCwTab(tab) {
+            document.querySelectorAll('.cw-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.cw-panel').forEach(p => p.classList.remove('active'));
+            if (tab === 'image') {
+                document.querySelectorAll('.cw-tab')[0].classList.add('active');
+                document.getElementById('cw-panel-image').classList.add('active');
+            } else {
+                document.querySelectorAll('.cw-tab')[1].classList.add('active');
+                document.getElementById('cw-panel-text').classList.add('active');
+            }
+        }
+
+        function toggleCwCombo(btn) {
+            const dd = btn.nextElementSibling;
+            const open = dd.classList.contains('show');
+            document.querySelectorAll('.cw-dropdown').forEach(d => d.classList.remove('show'));
+            if (!open) dd.classList.add('show');
+        }
+        function selectCwCombo(inputId, val, el) {
+            document.getElementById(inputId).value = val;
+            el.parentElement.querySelectorAll('.cw-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            el.parentElement.classList.remove('show');
+        }
+        document.addEventListener('click', e => { if (!e.target.closest('.cw-combo')) document.querySelectorAll('.cw-dropdown').forEach(d => d.classList.remove('show')); });
+
+        function handleCwImageUpload(e) {
+            const f = e.target.files[0]; if (!f) return;
+            cwSelectedImage = f;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                document.getElementById('cw-preview').src = ev.target.result;
+                document.getElementById('cw-preview').style.display = 'block';
+                document.getElementById('cw-upload-placeholder').style.display = 'none';
+                document.getElementById('cw-upload-area').classList.add('has-image');
+            };
+            reader.readAsDataURL(f);
+        }
+
+        async function streamCwRequest(body, retries=2) {
+            let lastErr;
+            for (let i=0; i<=retries; i++) {
+                if (i>0) { document.getElementById('cw-loading-text').textContent=`重试中(${i}/${retries})...`; await new Promise(r=>setTimeout(r,1000*i)); }
+                try {
+                    const res = await fetch('/api/generate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+                    if (res.status===413) throw new Error('图片太大');
+                    if (res.status===502||res.status===504) { lastErr=new Error('服务器繁忙'); continue; }
+                    if (!res.ok) throw new Error(`请求失败(${res.status})`);
+                    return res;
+                } catch(e) { lastErr=e; if (e.message.includes('图片太大')||i===retries) throw e; }
+            }
+            throw lastErr||new Error('请求失败');
+        }
+
+        async function generateCwImage() {
+            if (!cwSelectedImage) { showCwStatus('请先上传图片','error'); return; }
+            startCwLoading('AI 正在分析图片并创作文案...');
+            hideCwResult(); hideCwStatus();
+            try {
+                const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),img=new Image();
+                const {base64} = await new Promise(resolve => {
+                    img.onload = () => {
+                        let w=img.width,h=img.height,m=600;
+                        if (w>m||h>m) { if(w>h){h=Math.round(h*m/w);w=m;}else{w=Math.round(w*m/h);h=m;} }
+                        canvas.width=w;canvas.height=h;ctx.drawImage(img,0,0,w,h);
+                        const b64=canvas.toDataURL('image/jpeg',0.6).split(',')[1];
+                        resolve({base64:b64});
+                    };
+                    img.src=URL.createObjectURL(cwSelectedImage);
+                });
+                const tone=document.getElementById('cw-image-tone').value||'专业商务风';
+                const hint=document.getElementById('cw-image-hint').value.trim();
+                const fullPrompt=`图片模式 | 风格：${tone}${hint?' | 补充：'+hint:''}`;
+                const res=await streamCwRequest({type:'image',data:base64,tone,hint:hint||undefined});
+                document.getElementById('cw-result-content').textContent='';
+                document.getElementById('cw-img-desc').style.display='none';
+                document.getElementById('cw-result').classList.add('show');
+                const reader=res.body.getReader(),decoder=new TextDecoder();
+                let content='', desc='', hasErr=false;
+                const tid=setTimeout(()=>{hasErr=true;reader.cancel();showCwStatus('超时，请重试','error');},60000);
+                try {
+                    while(true){const{value,done}=await reader.read();if(done)break;
+                        decoder.decode(value).split('\n').filter(l=>l.trim()).forEach(l=>{
+                            if(l.startsWith('data: ')){try{const d=JSON.parse(l.slice(6));
+                                if(d.error)throw new Error(d.error);
+                                if(d.chunk){content+=d.chunk;document.getElementById('cw-result-content').textContent=content;}
+                                if(d.description&&!desc)desc=d.description;
+                                if(d.done&&d.success){clearTimeout(tid);showCwResult(desc,content,fullPrompt);showCwStatus('生成成功','success');return;}
+                            }catch(_){}}});
+                    }
+                }finally{clearTimeout(tid);reader.releaseLock();if(!hasErr&&content)showCwResult(desc,content,fullPrompt);}
+            } catch(e) { showCwStatus(e.message,'error'); } finally { stopCwLoading(); }
+        }
+
+        async function generateCwText() {
+            const pn=document.getElementById('cw-product-name').value;
+            const ft=document.getElementById('cw-product-features').value;
+            const au=document.getElementById('cw-target-audience').value;
+            const pl=document.getElementById('cw-use-platform').value;
+            const tone=document.getElementById('cw-text-tone').value||'专业商务风';
+            if(!pn.trim()){showCwStatus('请输入产品名称','error');return;}
+            const fullPrompt=`文字模式 | 产品：${pn} | 风格：${tone}${au?' | 受众：'+au:''}${pl?' | 平台：'+pl:''}`;
+            startCwLoading('AI 正在创作文案...');hideCwResult();hideCwStatus();
+            try {
+                const res=await streamCwRequest({type:'text',data:{product:pn,features:ft,audience:au,platform:pl},tone});
+                document.getElementById('cw-result-content').textContent='';
+                document.getElementById('cw-img-desc').style.display='none';
+                document.getElementById('cw-result').classList.add('show');
+                const reader=res.body.getReader(),decoder=new TextDecoder();
+                let content='',hasErr=false;
+                const tid=setTimeout(()=>{hasErr=true;reader.cancel();showCwStatus('超时，请重试','error');},60000);
+                try {
+                    while(true){const{value,done}=await reader.read();if(done)break;
+                        decoder.decode(value).split('\n').filter(l=>l.trim()).forEach(l=>{
+                            if(l.startsWith('data: ')){try{const d=JSON.parse(l.slice(6));
+                                if(d.error)throw new Error(d.error);
+                                if(d.chunk){content+=d.chunk;document.getElementById('cw-result-content').textContent=content;}
+                                if(d.done&&d.success){clearTimeout(tid);showCwResult('',content,fullPrompt);showCwStatus('生成成功','success');return;}
+                            }catch(_){}}});
+                    }
+                }finally{clearTimeout(tid);reader.releaseLock();if(!hasErr&&content)showCwResult('',content,fullPrompt);}
+            } catch(e) { showCwStatus(e.message,'error'); } finally { stopCwLoading(); }
+        }
+
+        function showCwResult(desc,content,prompt){
+            const dEl=document.getElementById('cw-img-desc');
+            if(desc||prompt){dEl.style.display='block';dEl.innerHTML=(desc?`<strong>📷 AI 识别结果：</strong>${desc}`:'')+(prompt?`<br><small>完整Prompt：${prompt}</small>`:'');}
+            else dEl.style.display='none';
+            const rEl=document.getElementById('cw-result-content');rEl.textContent=content;rEl.style.position='relative';
+            const existing=rEl.querySelector('.copy-btn');if(existing)existing.remove();
+            const btn=document.createElement('button');btn.className='copy-btn';btn.innerHTML='📋 复制';
+            btn.style.cssText='position:absolute;top:8px;right:8px;background:#4facfe;color:#fff;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:0.82rem;';
+            btn.onclick=()=>{navigator.clipboard.writeText(content).then(()=>{btn.innerHTML='✅ 已复制';btn.style.background='#28a745';setTimeout(()=>{btn.innerHTML='📋 复制';btn.style.background='#4facfe';},2000);});};
+            rEl.appendChild(btn);
+            document.getElementById('cw-result').classList.add('show');
+            saveCwHistory({type:desc?'image':'text',content,description:desc,prompt,timestamp:new Date().toISOString()});
+        }
+        function hideCwResult(){document.getElementById('cw-result').classList.remove('show');}
+        function startCwLoading(t){document.getElementById('cw-loading-text').textContent=t;document.getElementById('cw-loading').classList.add('show');document.getElementById('cw-btn-image').disabled=true;document.getElementById('cw-btn-text').disabled=true;}
+        function stopCwLoading(){document.getElementById('cw-loading').classList.remove('show');document.getElementById('cw-btn-image').disabled=false;document.getElementById('cw-btn-text').disabled=false;}
+        function showCwStatus(m,t){const el=document.getElementById('cw-status');el.textContent=m;el.className='cw-status '+t;}
+        function hideCwStatus(){document.getElementById('cw-status').className='cw-status';}
+
+        // 文案历史
+        const CW_HIST_KEY='ai-copywriter-history';
+        function saveCwHistory(item){let h=[];try{h=JSON.parse(localStorage.getItem(CW_HIST_KEY))||[];}catch(_){}if(!h.find(x=>x.content===item.content)){h.unshift(item);if(h.length>10)h=h.slice(0,10);localStorage.setItem(CW_HIST_KEY,JSON.stringify(h));}renderCwHistory();}
+        function renderCwHistory(){let h=[];try{h=JSON.parse(localStorage.getItem(CW_HIST_KEY))||[];}catch(_){}const s=document.getElementById('cw-history');if(!h.length){s.style.display='none';return;}s.style.display='block';document.getElementById('cw-history-list').innerHTML=h.map((it,i)=>`<div class="cw-history-item" onclick="showCwHistItem(${i})"><span class="cw-history-type">${it.type==='image'?'🖼️':'✏️'}</span><span class="cw-history-text">${escapeHtml(it.content.substring(0,50))}...</span><span class="cw-history-time">${formatCwTime(it.timestamp)}</span></div>`).join('');}
+        function showCwHistItem(i){let h=[];try{h=JSON.parse(localStorage.getItem(CW_HIST_KEY))||[];}catch(_){}const it=h[i];if(it)showCwResult(it.description||'',it.content,it.prompt||'');}
+        function clearCwHistory(){localStorage.removeItem(CW_HIST_KEY);renderCwHistory();}
+        function formatCwTime(s){const d=new Date(s),n=new Date(),diff=n-d;if(diff<6e4)return'刚刚';if(diff<36e5)return Math.floor(diff/6e4)+'分钟前';if(diff<864e5)return Math.floor(diff/36e5)+'小时前';return(d.getMonth()+1)+'/'+d.getDate();}
+        function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+
+        // 组合框键盘
+        document.querySelectorAll('.cw-combo input').forEach(inp=>{inp.addEventListener('keydown',function(e){const dd=this.parentElement.querySelector('.cw-dropdown');if(!dd||!dd.classList.contains('show')){if(e.key==='ArrowDown'||e.key==='ArrowUp'){dd.classList.add('show');return;}return;}const opts=dd.querySelectorAll('.cw-option');let ci=-1;opts.forEach((o,i)=>{if(o.classList.contains('selected'))ci=i;});if(e.key==='ArrowDown'){e.preventDefault();ci=(ci+1)%opts.length;updateCwSel(opts,ci,this);}else if(e.key==='ArrowUp'){e.preventDefault();ci=(ci-1+opts.length)%opts.length;updateCwSel(opts,ci,this);}else if(e.key==='Enter'){e.preventDefault();if(ci>=0){const o=opts[ci];selectCwCombo(this.id,o.textContent.trim(),o);}dd.classList.remove('show');}else if(e.key==='Escape'){dd.classList.remove('show');this.blur();}});});
+        function updateCwSel(opts,i,inp){opts.forEach(o=>o.classList.remove('selected'));opts[i].classList.add('selected');opts[i].scrollIntoView({block:'nearest'});inp.value=opts[i].textContent.trim();}
+        document.addEventListener('DOMContentLoaded',renderCwHistory);
+
+        // ===================== AI 图像生成器 JS =====================
+        const igState = {
+            currentTab: 'generate',
+            ctrlType: 'pose',
+            uploads: { gen: null, style: null, ctrl: null },
+            selectedStyles: { gen: '自动', style: '梵高', ctrl: '写实' },
+            sizes: { gen: '1:1' },
+            counts: { gen: 4 },
+            sliders: { strength: 80, detail: 60, 'ctrl-strength': 50 }
+        };
+
+        function toggleIgTheme() {
+            igTheme = igTheme === 'dark' ? 'light' : 'dark';
+            document.body.classList.toggle('light-mode', igTheme === 'light');
+            document.getElementById('ig-theme-btn').textContent = igTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        function switchIgTab(tab) {
+            igState.currentTab = tab;
+            document.querySelectorAll('.ig-subtab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.ig-input-area').forEach(a => a.classList.remove('active'));
+            document.querySelector(`.ig-subtab:nth-child(${tab==='generate'?1:tab==='style'?2:3})`).classList.add('active');
+            document.getElementById('ig-area-'+tab).classList.add('active');
+        }
+
+        // 上传
+        function handleIgUpload(e, id) {
+            const f = e.target.files[0]; if (!f) return;
+            igState.uploads[id] = f;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                document.getElementById('ig-preview-'+id).src = ev.target.result;
+                document.getElementById('ig-preview-'+id).style.display = 'block';
+                document.getElementById('ig-upload-'+id).querySelector('.ig-upload-placeholder').style.display = 'none';
+                document.getElementById('ig-upload-'+id).classList.add('has-image');
+            };
+            reader.readAsDataURL(f);
+        }
+        function clearIgUpload(id) {
+            igState.uploads[id] = null;
+            document.getElementById('ig-preview-'+id).style.display = 'none';
+            document.getElementById('ig-upload-'+id).querySelector('.ig-upload-placeholder').style.display = '';
+            document.getElementById('ig-upload-'+id).classList.remove('has-image');
+            document.getElementById('ig-file-'+id).value = '';
+        }
+
+        // 风格卡片
+        function buildStyleCards(containerId, styles, stateKey) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = styles.map(s => `
+                <div class="ig-style-card${s.name===igState.selectedStyles[stateKey]?' active':''}" onclick="selectIgStyle('${stateKey}','${s.name}',this)">
+                    <div class="ig-style-thumb">${s.icon}</div>
+                    <div class="ig-style-name">${s.name}</div>
+                </div>
+            `).join('');
+        }
+        function selectIgStyle(key, name, el) {
+            igState.selectedStyles[key] = name;
+            el.parentElement.querySelectorAll('.ig-style-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // 尺寸按钮
+        function buildSizeBtns(containerId, stateKey) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = IG_SIZES.map(s => `
+                <button class="ig-size-btn${s===igState.sizes[stateKey]?' active':''}" onclick="selectIgSize('${stateKey}','${s}',this)">${s}</button>
+            `).join('');
+        }
+        function selectIgSize(key, size, el) {
+            igState.sizes[key] = size;
+            el.parentElement.querySelectorAll('.ig-size-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function stepIgCount(key, delta) {
+            igState.counts[key] = Math.max(1, Math.min(9, igState.counts[key] + delta));
+            document.getElementById('ig-count-'+key).textContent = igState.counts[key];
+        }
+
+        function toggleIgAdvanced(key) {
+            const el = document.getElementById('ig-advanced-'+key);
+            const toggle = el.previousElementSibling;
+            el.classList.toggle('open');
+            toggle.textContent = el.classList.contains('open') ? '▼ 高级选项' : '▶ 高级选项';
+        }
+
+        function updateIgSlider(key, val) {
+            igState.sliders[key] = parseInt(val);
+            document.getElementById('ig-val-'+key).textContent = val + '%';
+        }
+
+        function selectIgCtrl(type, el) {
+            igState.ctrlType = type;
+            el.parentElement.querySelectorAll('.ig-ctrl-type').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // 图像生成 API 配置（通过 Vercel Rewrites 代理，避免 CORS）
+        const IG_API_URL = '/api/generate';
+        const IG_API_KEY = 'sk-vqUhgAftHatcXoZ8SPtXe6SByH8Icdx4XTjReoLnqBSW89H0';
+        const IG_MODEL = 'gpt-image-2';
+
+        async function igFetch(url, options) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`HTTP ${res.status}: ${errText.substring(0, 100)}`);
+                }
+                return res;
+            } catch (err) {
+                console.error('API 请求失败:', err);
+                
+                // 提供详细的错误诊断
+                let errorMsg = `网络请求失败：${err.message}`;
+                if (err.message.includes('Failed to fetch')) {
+                    errorMsg += '\n\n可能原因：\n1. API CORS 配置问题（请联系 API 提供者）\n2. 网络连接问题\n3. API 地址不可达';
+                }
+                throw new Error(errorMsg);
+            }
+        }
+
+        function igSizeToPixels(size) {
+            const map = { '1:1':'1024x1024', '4:3':'1024x768', '3:4':'768x1024', '16:9':'1792x1024', '9:16':'1024x1792' };
+            return map[size] || '1024x1024';
+        }
+
+        function igBuildPrompt(tab) {
+            const promptEl = document.getElementById('ig-prompt-'+tab);
+            const base = promptEl ? promptEl.value.trim() : '';
+            const style = igState.selectedStyles[tab] || '自动';
+
+            if (tab === 'generate') {
+                if (!base) return { prompt: '', hasImage: false };
+                let p = base;
+                if (style && style !== '自动') {
+                    const styleMap = {
+                        '写实': 'photorealistic style, hyper-detailed',
+                        '动漫': 'anime style, manga illustration',
+                        '水彩': 'watercolor painting style, soft washes',
+                        '油画': 'oil painting style, rich texture',
+                        '素描': 'pencil sketch style, hand-drawn',
+                        '赛博朋克': 'cyberpunk style, neon lights, futuristic city',
+                        '像素风': 'pixel art style, retro 8-bit',
+                        '3D渲染': '3D render, octane render, unreal engine 5',
+                        '浮世绘': 'ukiyo-e style, Japanese woodblock print',
+                        '极简插画': 'minimalist illustration, flat design, clean lines'
+                    };
+                    if (styleMap[style]) p += ', ' + styleMap[style];
+                }
+                return { prompt: p, hasImage: !!igState.uploads[tab] };
+            }
+            if (tab === 'style') {
+                let p = 'Apply the artistic style transformation: ' + style + ' style';
+                return { prompt: p, hasImage: !!igState.uploads[tab] };
+            }
+            if (tab === 'ctrl') {
+                const ctrlMap = { 'pose':'pose', 'canny':'line art', 'depth':'depth map', 'edge':'edge detection' };
+                let p = base || 'Generate an image based on the reference';
+                p += '. Control mode: ' + (ctrlMap[igState.ctrlType] || igState.ctrlType);
+                if (style && style !== '自动') p += '. Style: ' + style;
+                return { prompt: p, hasImage: !!igState.uploads[tab] };
+            }
+            return { prompt: base, hasImage: !!igState.uploads[tab] };
+        }
+
+        async function igGenerate(tab) {
+            const btn = document.getElementById('ig-btn-'+tab);
+            btn.disabled = true; btn.textContent = '⏳ 正在生成...';
+            showIgCanvasLoading();
+
+            try {
+                const { prompt, hasImage } = igBuildPrompt(tab);
+
+                // 图生图模式暂用 prompt 描述替代（API 支持情况待确认）
+                if (!prompt && !hasImage) {
+                    showIgCanvasError('请输入描述或上传图片');
+                    btn.disabled = false;
+                    btn.textContent = tab==='generate'?'✨ 开始生成':tab==='style'?'🎨 开始迁移':'🔧 开始生成';
+                    return;
+                }
+                if (tab === 'style' && !hasImage) {
+                    showIgCanvasError('请先上传原图');
+                    btn.disabled = false;
+                    btn.textContent = '🎨 开始迁移';
+                    return;
+                }
+                if (tab === 'ctrl' && !hasImage) {
+                    showIgCanvasError('请先上传参考图');
+                    btn.disabled = false;
+                    btn.textContent = '🔧 开始生成';
+                    return;
+                }
+
+                const count = tab === 'generate' ? igState.counts.gen : 1;
+                const size = tab === 'generate' ? igSizeToPixels(igState.sizes.gen) : '1024x1024';
+
+                const reqBody = {
+                    model: IG_MODEL,
+                    prompt: prompt || 'Generate a beautiful image',
+                    n: count,
+                    size: size
+                };
+
+                // 如果有上传图片，尝试转为 base64 以图生图
+                if (hasImage && igState.uploads[tab]) {
+                    const b64 = await igImageToBase64(igState.uploads[tab]);
+                    reqBody.image = b64;
+                }
+
+                let res;
+                
+                try {
+                    res = await igFetch(IG_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + IG_API_KEY
+                        },
+                        body: JSON.stringify(reqBody)
+                    });
+                } catch (fetchErr) {
+                    console.error('Fetch error:', fetchErr);
+                    throw new Error(`网络请求失败：${fetchErr.message}。请检查：\n1. API 地址是否正确\n2. 是否允许跨域(CORS)\n3. 网络连接是否正常`);
+                }
+
+                if (!res.ok) {
+                    let errText = '';
+                    try {
+                        errText = await res.text();
+                    } catch (_) {}
+                    throw new Error(`API 错误(${res.status}): ${errText.substring(0,100)}`);
+                }
+
+                const data = await res.json();
+
+                // OpenAI 格式: { data: [{ url: "..." }, ...] }
+                let images = [];
+                if (data.data && Array.isArray(data.data)) {
+                    images = data.data.map(d => d.url || d.b64_json).filter(Boolean);
+                }
+                // 兼容其他格式
+                if (!images.length && data.images && Array.isArray(data.images)) {
+                    images = data.images.map(d => d.url || d.b64_json).filter(Boolean);
+                }
+                if (!images.length && data.url) {
+                    images = [data.url];
+                }
+
+                if (images.length) {
+                    displayIgResults(images);
+                    images.forEach(url => addIgHistory(url, tab));
+                } else {
+                    showIgCanvasError('API 返回了空结果，请检查参数');
+                }
+            } catch(e) {
+                showIgCanvasError(e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = tab==='generate'?'✨ 开始生成':tab==='style'?'🎨 开始迁移':'🔧 开始生成';
+            }
+        }
+
+        function igImageToBase64(file) {
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showIgCanvasLoading() {
+            document.getElementById('ig-canvas').innerHTML = `
+                <div class="ig-canvas-loading"><div class="ig-pulse"></div><span>正在生成...</span></div>`;
+        }
+        function showIgCanvasError(msg) {
+            document.getElementById('ig-canvas').innerHTML = `
+                <div class="ig-canvas-empty"><div class="icon">⚠️</div><div>生成失败：${msg}</div>
+                <button style="margin-top:12px;padding:8px 20px;border-radius:20px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;" onclick="resetIgCanvas()">重试</button></div>`;
+        }
+        function resetIgCanvas() {
+            document.getElementById('ig-canvas').innerHTML = `
+                <div class="ig-canvas-empty"><div class="icon">🎨</div><div>输入描述或上传图片，开始创作</div></div>`;
+        }
+
+        function displayIgResults(images) {
+            const canvas = document.getElementById('ig-canvas');
+            const cols = images.length <= 2 ? 2 : images.length <= 4 ? 2 : 3;
+            const overlayHTML = images.length === 1 ? `
+                <div class="ig-canvas-overlay">
+                    <button onclick="downloadIgImage('${images[0]}')" title="下载">⬇</button>
+                    <button onclick="toggleIgFav(0)" title="收藏">⭐</button>
+                </div>` : '';
+            canvas.innerHTML = overlayHTML + `
+                <div class="ig-canvas-grid cols-${cols}">
+                    ${images.map((url,i) => `<img class="ig-canvas-img" src="${url}" onclick="viewIgFull('${url}')" alt="生成结果 ${i+1}">`).join('')}
+                </div>`;
+            igActiveCanvasImg = images[0];
+        }
+        function viewIgFull(url) {
+            const canvas = document.getElementById('ig-canvas');
+            canvas.innerHTML = `
+                <div class="ig-canvas-overlay">
+                    <button onclick="downloadIgImage('${url}')" title="下载">⬇</button>
+                    <button onclick="displayIgResults(${JSON.stringify(igHistory.filter(h=>h.tab===igState.currentTab).map(h=>h.url).slice(-4))})" title="返回">↩</button>
+                </div>
+                <img src="${url}" style="max-width:90%;max-height:85vh;object-fit:contain;border-radius:var(--radius-sm);cursor:zoom-out;" onclick="displayIgResults(${JSON.stringify(igHistory.filter(h=>h.tab===igState.currentTab).map(h=>h.url).slice(-4))})">`;
+        }
+        function downloadIgImage(url) {
+            const a = document.createElement('a'); a.href = url; a.download = 'ai-generated.png'; a.click();
+        }
+        function toggleIgFav(idx) { /* 暂存 */ }
+
+        // 历史
+        function addIgHistory(url, tab) {
+            igHistory.unshift({ url, tab, time: new Date().toISOString(), fav: false });
+            if (igHistory.length > 30) igHistory = igHistory.slice(0, 30);
+            renderIgHistory();
+        }
+        function renderIgHistory() {
+            const bar = document.getElementById('ig-history-bar');
+            if (!igHistory.length) {
+                bar.innerHTML = '<span class="empty">生成后历史记录将出现在这里</span>';
+                return;
+            }
+            bar.innerHTML = igHistory.map((h,i) => `
+                <div class="ig-history-item${h.fav?' fav':''}" onclick="showIgHistItem(${i})" title="${h.tab} · ${formatCwTime(h.time)}">
+                    <img src="${h.url}" alt="">
+                    <div class="ig-history-star">⭐</div>
+                </div>
+            `).join('');
+        }
+        function showIgHistItem(i) {
+            const h = igHistory[i]; if (!h) return;
+            document.getElementById('ig-canvas').innerHTML = `
+                <div class="ig-canvas-overlay">
+                    <button onclick="downloadIgImage('${h.url}')" title="下载">⬇</button>
+                </div>
+                <img src="${h.url}" style="max-width:90%;max-height:85vh;object-fit:contain;border-radius:var(--radius-sm);">`;
+        }
+
+        // 拖拽上传
+        ['gen','style','ctrl'].forEach(id => {
+            const zone = document.getElementById('ig-upload-'+id);
+            if (!zone) return;
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor='var(--accent)'; });
+            zone.addEventListener('dragleave', () => { zone.style.borderColor=''; });
+            zone.addEventListener('drop', e => {
+                e.preventDefault(); zone.style.borderColor = '';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const dt = new DataTransfer(); dt.items.add(file);
+                    document.getElementById('ig-file-'+id).files = dt.files;
+                    handleIgUpload({ target: { files: dt.files } }, id);
+                }
+            });
+        });
+
+        // 初始化
+        (function initIg() {
+            buildStyleCards('ig-styles-gen', IG_STYLES_GENERATE, 'gen');
+            buildStyleCards('ig-styles-style', IG_STYLES_ART, 'style');
+            buildStyleCards('ig-styles-ctrl', IG_STYLES_GENERATE, 'ctrl');
+            buildSizeBtns('ig-sizes-gen', 'gen');
+        })();
+    </script>
+</body>
+</html>
