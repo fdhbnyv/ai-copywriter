@@ -1,11 +1,11 @@
-export type ToneStyle = 'professional' | 'friendly' | 'creative' | 'persuasive';
+export type ToneStyle = string;
 
 export type Platform = 'wechat' | 'xiaohongshu' | 'douyin' | 'taobao' | 'weibo' | 'general' | string;
 
 export interface GenerateRequest {
   product: string;
   features: string;
-  tone: ToneStyle;
+  tone: string;
   audience?: string;
   platform?: Platform;
   image?: string;

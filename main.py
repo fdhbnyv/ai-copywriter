@@ -36,6 +36,10 @@ TONE_PROMPTS = {
     'friendly': '请以亲切友好风格撰写，语气温暖、真诚，像朋友推荐好物一样。',
     'creative': '请以创意潮流风格撰写，语言活泼有创意，适合年轻用户群体。',
     'persuasive': '请以说服营销风格撰写，突出性价比和紧迫感，促使用户立即购买。',
+    'humorous': '请以幽默搞笑风格撰写，语言风趣幽默，让人会心一笑。',
+    'lyrical': '请以文艺清新风格撰写，语言优美有诗意，适合文艺类产品。',
+    'luxury': '请以高端奢华风格撰写，突出品质感和尊贵体验。',
+    'tech': '请以科技极客风格撰写，突出技术参数和创新点。',
 }
 
 PLATFORM_PROMPTS = {
@@ -50,7 +54,7 @@ PLATFORM_PROMPTS = {
 
 def generate_prompt(product: str, features: str, tone: str, audience: str, platform: str, image_base64: str = None) -> list:
     """构建智谱 API 的请求消息"""
-    tone_prompt = TONE_PROMPTS.get(tone, TONE_PROMPTS['professional'])
+    tone_prompt = TONE_PROMPTS.get(tone, f'请以"{tone}"风格撰写文案。')
     platform_prompt = PLATFORM_PROMPTS.get(platform, PLATFORM_PROMPTS['general'])
     
     user_content = []

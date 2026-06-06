@@ -1,16 +1,20 @@
 import { useState, useRef } from 'react';
-import type { ToneStyle, Platform } from '../types';
+import type { Platform } from '../types';
 
 interface InputFormProps {
-  onSubmit: (data: { product: string; features: string; tone: ToneStyle; audience?: string; platform?: Platform; image?: string }) => void;
+  onSubmit: (data: { product: string; features: string; tone: string; audience?: string; platform?: Platform; image?: string }) => void;
   loading: boolean;
 }
 
-const toneOptions: { value: ToneStyle; label: string }[] = [
+const toneOptions: { value: string; label: string }[] = [
   { value: 'professional', label: '专业商务风' },
   { value: 'friendly', label: '亲切友好风' },
   { value: 'creative', label: '创意潮流风' },
   { value: 'persuasive', label: '说服营销风' },
+  { value: 'humorous', label: '幽默搞笑风' },
+  { value: 'lyrical', label: '文艺清新风' },
+  { value: 'luxury', label: '高端奢华风' },
+  { value: 'tech', label: '科技极客风' },
 ];
 
 const platformOptions: { value: Platform; label: string }[] = [
@@ -39,9 +43,12 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
   const [showAudienceSuggestions, setShowAudienceSuggestions] = useState<boolean>(false);
   const [platformValue, setPlatformValue] = useState<Platform>('general');
   const [showPlatformSuggestions, setShowPlatformSuggestions] = useState<boolean>(false);
+  const [toneValue, setToneValue] = useState<string>('professional');
+  const [showToneSuggestions, setShowToneSuggestions] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audienceInputRef = useRef<HTMLInputElement>(null);
   const platformInputRef = useRef<HTMLInputElement>(null);
+  const toneInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,6 +81,14 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
     }
   };
 
+  const handleToneSelect = (value: string) => {
+    setToneValue(value);
+    setShowToneSuggestions(false);
+    if (toneInputRef.current) {
+      toneInputRef.current.value = value;
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -88,7 +103,7 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
     onSubmit({
       product,
       features: formData.get('features') as string,
-      tone: formData.get('tone') as ToneStyle,
+      tone: toneValue || 'professional',
       audience: audienceValue || undefined,
       platform: platformValue || undefined,
       image: preview || undefined,
@@ -222,22 +237,35 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
         </div>
       </div>
 
-      <div>
+      <div className="relative">
         <label htmlFor="tone" className="block text-gray-700 font-semibold mb-2">
           文案风格
         </label>
-        <select
+        <input
+          type="text"
           id="tone"
-          name="tone"
+          ref={toneInputRef}
           defaultValue="professional"
+          onChange={(e) => setToneValue(e.target.value)}
+          onFocus={() => setShowToneSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowToneSuggestions(false), 200)}
           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors"
-        >
-          {toneOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          placeholder="输入或选择文案风格"
+        />
+        {showToneSuggestions && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            {toneOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleToneSelect(option.value)}
+                className="w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <button
