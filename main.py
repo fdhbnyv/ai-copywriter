@@ -7,8 +7,9 @@ AI文案生成器 - 后端服务
 
 import os
 import json
+import sys
 import requests
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -114,6 +115,7 @@ def call_zhipu_api_stream(messages: list):
                 data_str = line_str[6:]
                 if data_str == '[DONE]':
                     yield 'data: [DONE]\n\n'
+                    sys.stdout.flush()
                     break
                 try:
                     result = json.loads(data_str)
@@ -121,6 +123,7 @@ def call_zhipu_api_stream(messages: list):
                     content = delta.get('content', '')
                     if content:
                         yield f'data: {json.dumps({"content": content})}\n\n'
+                        sys.stdout.flush()
                 except json.JSONDecodeError:
                     continue
 
@@ -142,12 +145,13 @@ def generate_text():
         messages = generate_prompt(product, features, tone, audience, platform)
         
         return Response(
-            call_zhipu_api_stream(messages),
+            stream_with_context(call_zhipu_api_stream(messages)),
             mimetype='text/event-stream',
             headers={
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
                 'X-Accel-Buffering': 'no',
+                'Content-Type': 'text/event-stream',
             }
         )
     
@@ -176,12 +180,13 @@ def generate_image_text():
         messages = generate_prompt(product_name, features_text, tone, audience, platform, image_base64)
         
         return Response(
-            call_zhipu_api_stream(messages),
+            stream_with_context(call_zhipu_api_stream(messages)),
             mimetype='text/event-stream',
             headers={
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
                 'X-Accel-Buffering': 'no',
+                'Content-Type': 'text/event-stream',
             }
         )
     
