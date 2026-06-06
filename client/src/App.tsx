@@ -1,9 +1,9 @@
-import type { GenerateRequest } from './types';
 import { Header } from './components/Header';
 import { InputForm } from './components/InputForm';
 import { ResultDisplay } from './components/ResultDisplay';
 import { StatusMessage } from './components/StatusMessage';
 import { useGenerateCopywriting } from './hooks/useGenerate';
+import type { GenerateRequest } from './types';
 
 function App() {
   const { copywriting, loading, status, errorMessage, generate } = useGenerateCopywriting();
@@ -17,7 +17,7 @@ function App() {
       <div className="bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-4xl overflow-hidden">
         <Header />
         
-        <div className="p-10">
+        <div className="p-8">
           <InputForm onSubmit={handleGenerate} loading={loading} />
           
           <ResultDisplay copywriting={copywriting} loading={loading} />
@@ -25,7 +25,7 @@ function App() {
           <StatusMessage status={status} message={status === 'error' ? errorMessage : '文案生成成功！'} />
           
           <div className="mt-6 bg-[#f0f7ff] border border-[#cce5ff] rounded-xl p-4 text-sm text-[#004085]">
-            <strong>技术说明：</strong> 这个Demo通过 <code className="bg-[#e7f1ff] px-1.5 py-0.5 rounded font-mono">fetch()</code> 调用后端API接口 <code className="bg-[#e7f1ff] px-1.5 py-0.5 rounded font-mono">http://localhost:5000/api/generate-text</code>，前端发送JSON数据，后端处理后返回文案结果。
+            <strong>技术说明：</strong> 支持纯文本和图片多模态输入，使用智谱 GLM-4.6V 模型，流式输出文案。
           </div>
         </div>
       </div>

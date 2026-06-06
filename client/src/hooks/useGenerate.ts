@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { GenerateRequest, StatusType } from '../types';
-import { generateCopywriting } from '../services/api';
+import { generateCopywritingStream } from '../services/api';
 
 export function useGenerateCopywriting() {
   const [copywriting, setCopywriting] = useState<string>('');
@@ -14,17 +14,26 @@ export function useGenerateCopywriting() {
     setCopywriting('');
     setErrorMessage('');
 
-    try {
-      const result = await generateCopywriting(data);
-      setCopywriting(result.copywriting);
-      setStatus('success');
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : '生成失败';
-      setErrorMessage(msg);
-      setStatus('error');
-    } finally {
-      setLoading(false);
-    }
+    let currentText = '';
+
+    await generateCopywritingStream(
+      data,
+      (chunk) => {
+        currentText += chunk;
+        setCopywriting(currentText);
+      },
+      () => {
+        setLoading(false);
+        if (currentText) {
+          setStatus('success');
+        }
+      },
+      (error) => {
+        setLoading(false);
+        setErrorMessage(error);
+        setStatus('error');
+      }
+    );
   }, []);
 
   return {

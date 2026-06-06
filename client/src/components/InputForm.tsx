@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
-import type { ToneStyle } from '../types';
+import type { ToneStyle, Platform } from '../types';
 
 interface InputFormProps {
-  onSubmit: (data: { product: string; features: string; tone: ToneStyle; image?: string }) => void;
+  onSubmit: (data: { product: string; features: string; tone: ToneStyle; audience?: string; platform?: Platform; image?: string }) => void;
   loading: boolean;
 }
 
@@ -13,9 +13,35 @@ const toneOptions: { value: ToneStyle; label: string }[] = [
   { value: 'persuasive', label: '说服营销风' },
 ];
 
+const platformOptions: { value: Platform; label: string }[] = [
+  { value: 'wechat', label: '微信公众号' },
+  { value: 'xiaohongshu', label: '小红书' },
+  { value: 'douyin', label: '抖音/短视频' },
+  { value: 'taobao', label: '淘宝/电商' },
+  { value: 'weibo', label: '微博' },
+  { value: 'general', label: '通用平台' },
+];
+
+const audienceOptions: string[] = [
+  '18-25岁年轻人',
+  '25-35岁白领',
+  '35-50岁中年人',
+  '学生群体',
+  '宝妈群体',
+  '企业用户',
+  '高端用户',
+  '价格敏感型用户',
+];
+
 export function InputForm({ onSubmit, loading }: InputFormProps) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [audienceValue, setAudienceValue] = useState<string>('');
+  const [showAudienceSuggestions, setShowAudienceSuggestions] = useState<boolean>(false);
+  const [platformValue, setPlatformValue] = useState<Platform>('general');
+  const [showPlatformSuggestions, setShowPlatformSuggestions] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audienceInputRef = useRef<HTMLInputElement>(null);
+  const platformInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,6 +61,19 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
     }
   };
 
+  const handleAudienceSelect = (value: string) => {
+    setAudienceValue(value);
+    setShowAudienceSuggestions(false);
+  };
+
+  const handlePlatformSelect = (value: Platform) => {
+    setPlatformValue(value);
+    setShowPlatformSuggestions(false);
+    if (platformInputRef.current) {
+      platformInputRef.current.value = value;
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -50,14 +89,16 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
       product,
       features: formData.get('features') as string,
       tone: formData.get('tone') as ToneStyle,
+      audience: audienceValue || undefined,
+      platform: platformValue || undefined,
       image: preview || undefined,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="product" className="block text-gray-700 font-semibold mb-2 text-lg">
+        <label htmlFor="product" className="block text-gray-700 font-semibold mb-2">
           产品名称
         </label>
         <input
@@ -65,18 +106,18 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
           id="product"
           name="product"
           defaultValue="无线蓝牙耳机"
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-[#4facfe] focus:outline-none transition-colors"
+          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors"
           placeholder="例如：无线蓝牙耳机、智能手表、有机护肤品..."
         />
       </div>
 
       <div>
-        <label className="block text-gray-700 font-semibold mb-2 text-lg">
+        <label className="block text-gray-700 font-semibold mb-2">
           产品图片（可选）
         </label>
         {preview ? (
           <div className="relative mb-3">
-            <img src={preview} alt="预览" className="w-full h-48 object-cover rounded-lg border-2 border-gray-300" />
+            <img src={preview} alt="预览" className="w-full h-40 object-cover rounded-lg border-2 border-gray-300" />
             <button
               type="button"
               onClick={handleRemoveImage}
@@ -103,27 +144,93 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
       </div>
 
       <div>
-        <label htmlFor="features" className="block text-gray-700 font-semibold mb-2 text-lg">
+        <label htmlFor="features" className="block text-gray-700 font-semibold mb-2">
           产品特点
         </label>
         <textarea
           id="features"
           name="features"
           defaultValue="降噪功能、长续航、轻便设计、防水性能"
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-[#4facfe] focus:outline-none transition-colors min-h-[120px] resize-y"
+          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors min-h-[100px] resize-y"
           placeholder="描述产品的核心卖点..."
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div className="relative">
+          <label htmlFor="audience" className="block text-gray-700 font-semibold mb-2">
+            目标群体（可选）
+          </label>
+          <input
+            type="text"
+            id="audience"
+            ref={audienceInputRef}
+            value={audienceValue}
+            onChange={(e) => setAudienceValue(e.target.value)}
+            onFocus={() => setShowAudienceSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowAudienceSuggestions(false), 200)}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors"
+            placeholder="输入或选择目标群体"
+          />
+          {showAudienceSuggestions && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              {audienceOptions
+                .filter(opt => opt.includes(audienceValue) || audienceValue === '')
+                .map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleAudienceSelect(option)}
+                    className="w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors"
+                  >
+                    {option}
+                  </button>
+                ))}
+            </div>
+          )}
+        </div>
+
+        <div className="relative">
+          <label htmlFor="platform" className="block text-gray-700 font-semibold mb-2">
+            发布平台
+          </label>
+          <input
+            type="text"
+            id="platform"
+            ref={platformInputRef}
+            defaultValue="general"
+            onChange={(e) => setPlatformValue(e.target.value)}
+            onFocus={() => setShowPlatformSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowPlatformSuggestions(false), 200)}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors"
+            placeholder="输入或选择平台"
+          />
+          {showPlatformSuggestions && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+              {platformOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handlePlatformSelect(option.value)}
+                  className="w-full px-4 py-2 text-left hover:bg-blue-50 transition-colors"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div>
-        <label htmlFor="tone" className="block text-gray-700 font-semibold mb-2 text-lg">
+        <label htmlFor="tone" className="block text-gray-700 font-semibold mb-2">
           文案风格
         </label>
         <select
           id="tone"
           name="tone"
           defaultValue="professional"
-          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-[#4facfe] focus:outline-none transition-colors"
+          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors"
         >
           {toneOptions.map((option) => (
             <option key={option.value} value={option.value}>
