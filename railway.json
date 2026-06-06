@@ -1,10 +1,10 @@
 {
   "build": {
     "builder": "nixpacks",
-    "buildCommand": "cd server && pip install -r requirements.txt"
+    "buildCommand": "pip install -r requirements.txt"
   },
   "deploy": {
-    "startCommand": "cd server && gunicorn main:app --bind 0.0.0.0:$PORT",
+    "startCommand": "gunicorn main:app",
     "healthcheckPath": "/health"
   }
 }
