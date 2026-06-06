@@ -120,7 +120,6 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
           type="text"
           id="product"
           name="product"
-          defaultValue="无线蓝牙耳机"
           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors"
           placeholder="例如：无线蓝牙耳机、智能手表、有机护肤品..."
         />
@@ -165,7 +164,6 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
         <textarea
           id="features"
           name="features"
-          defaultValue="降噪功能、长续航、轻便设计、防水性能"
           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4facfe] focus:outline-none transition-colors min-h-[100px] resize-y"
           placeholder="描述产品的核心卖点..."
         />
