@@ -169,7 +169,7 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="relative">
           <label htmlFor="audience" className="block text-gray-700 font-semibold mb-2">
             目标群体（可选）
