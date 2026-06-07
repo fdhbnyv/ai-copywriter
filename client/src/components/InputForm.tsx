@@ -186,7 +186,7 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
             placeholder="输入或选择目标群体"
           />
           {showAudienceSuggestions && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 sm:max-h-48 overflow-y-auto">
               {audienceOptions
                 .filter(opt => opt.includes(audienceValue) || audienceValue === '')
                 .map((option) => (
@@ -219,7 +219,7 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
             placeholder="输入或选择平台"
           />
           {showPlatformSuggestions && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 sm:max-h-48 overflow-y-auto">
               {platformOptions.map((option) => (
                 <button
                   key={option.value}
@@ -251,7 +251,7 @@ export function InputForm({ onSubmit, loading }: InputFormProps) {
           placeholder="输入或选择文案风格"
         />
         {showToneSuggestions && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-36 sm:max-h-48 overflow-y-auto">
             {toneOptions.map((option) => (
               <button
                 key={option.value}
