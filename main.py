@@ -19,6 +19,9 @@ ZHIPU_API_KEY = os.environ.get('ZHIPU_API_KEY', '')
 ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
 MODEL = 'glm-4.6v'
 
+MANXIAOBAI_API_KEY = os.environ.get('MANXIAOBAI_API_KEY', '')
+MANXIAOBAI_API_URL = 'https://api.manxiaobai.online/v1/images/generations'
+
 SYSTEM_PROMPT = """你是一位专业的营销文案撰写专家。请根据用户提供的产品信息和特点，生成吸引人的营销文案。
 
 要求：
@@ -196,6 +199,44 @@ def generate_image_text():
     
     except Exception as e:
         return jsonify({'error': f'生成失败: {str(e)}'}), 500
+
+
+@app.route('/api/generate-image', methods=['POST'])
+def generate_image():
+    """图片生成 API"""
+    try:
+        data = request.json
+        prompt = data.get('prompt', '').strip()
+        size = data.get('size', '1024x1024')
+        count = data.get('count', 1)
+        style = data.get('style', 'realistic')
+
+        if not prompt:
+            return jsonify({'error': '请输入提示词'}), 400
+
+        headers = {
+            'Authorization': f'Bearer {MANXIAOBAI_API_KEY}',
+            'Content-Type': 'application/json',
+        }
+
+        body = {
+            'model': 'flux-1.1-pro',
+            'prompt': prompt,
+            'n': count,
+            'size': size,
+        }
+
+        resp = requests.post(MANXIAOBAI_API_URL, headers=headers, json=body, timeout=120)
+        
+        if resp.status_code != 200:
+            err = resp.json().get('error', {})
+            return jsonify({'error': f'图片生成失败: {err.get("message", resp.text)}'}), 500
+
+        result = resp.json()
+        return jsonify({'images': result.get('data', [])})
+
+    except Exception as e:
+        return jsonify({'error': f'图片生成失败: {str(e)}'}), 500
 
 
 @app.route('/health', methods=['GET'])

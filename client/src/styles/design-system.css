@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg-primary: #0D0D0D;
+  --bg-secondary: #1A1A1A;
+  --bg-card: #222222;
+  --bg-input: #2A2A2A;
+  --bg-hover: #333333;
+  --border-default: #333333;
+  --border-active: #6366F1;
+  --text-primary: #FAFAFA;
+  --text-secondary: #A0A0A0;
+  --text-muted: #606060;
+  --accent-primary: #6366F1;
+  --accent-secondary: #8B5CF6;
+  --accent-success: #22C55E;
+  --accent-error: #EF4444;
+  --gradient-cta: linear-gradient(135deg, #6366F1, #8B5CF6);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.4);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+}
