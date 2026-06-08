@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 export default function CreationPage() {
   const [prompt, setPrompt] = useState('')
@@ -198,6 +198,22 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt }: { setImageUrl
   const [size, setSize] = useState('1024x1024')
   const [count, setCount] = useState(1)
   const [style, setStyle] = useState('realistic')
+  const [refImage, setRefImage] = useState<string | null>(null)
+  const [strength, setStrength] = useState(70)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onloadend = () => setRefImage(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveRef = () => {
+    setRefImage(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -210,7 +226,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt }: { setImageUrl
       const res = await fetch('https://ai-copywriter-production-74a7.up.railway.app/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, size, count, style }),
+        body: JSON.stringify({ prompt, size, count, style, refImage, strength }),
       })
       const data = await res.json()
       if (data.images && data.images.length > 0) {
@@ -250,6 +266,51 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt }: { setImageUrl
           <span className="text-xs text-[var(--text-muted)]">{prompt.length}/500</span>
           {prompt && <button type="button" onClick={() => setPrompt('')} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)]">清空</button>}
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">参考图片（可选 / 图生图模式）</label>
+        {refImage ? (
+          <div className="relative mb-2">
+            <img src={refImage} alt="参考图" className="w-full h-40 object-cover rounded-lg border border-[var(--border-default)]" />
+            <button
+              type="button"
+              onClick={handleRemoveRef}
+              className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-black/80"
+            >
+              ×
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full h-24 border-2 border-dashed border-[var(--border-default)] rounded-lg flex flex-col items-center justify-center text-[var(--text-muted)] hover:border-[var(--accent-primary)] hover:text-[var(--text-secondary)] transition-colors cursor-pointer"
+          >
+            <span className="text-2xl mb-1">+</span>
+            <span className="text-xs">点击上传参考图片</span>
+          </div>
+        )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        {refImage && (
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-xs text-[var(--text-secondary)] shrink-0">参考强度</span>
+            <input
+              type="range"
+              min={10}
+              max={100}
+              value={strength}
+              onChange={(e) => setStrength(Number(e.target.value))}
+              className="flex-1 accent-[var(--accent-primary)]"
+            />
+            <span className="text-xs text-[var(--text-muted)] w-6 text-right">{strength}%</span>
+          </div>
+        )}
       </div>
 
       <div>
