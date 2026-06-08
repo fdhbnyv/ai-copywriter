@@ -4,7 +4,7 @@
     "buildCommand": "pip install -r requirements.txt"
   },
   "deploy": {
-    "startCommand": "gunicorn main:app --no-buffering --timeout 120",
+    "startCommand": "gunicorn main:app --timeout 120",
     "healthcheckPath": "/health"
   }
 }
