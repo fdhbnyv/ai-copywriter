@@ -220,9 +220,9 @@ def generate_image():
         }
 
         body = {
-            'model': 'flux-1.1-pro',
+            'model': 'gpt-image-2',
             'prompt': prompt,
-            'n': count,
+            'n': min(count, 4),
             'size': size,
         }
 
