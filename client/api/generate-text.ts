@@ -87,7 +87,7 @@ ${platformPrompt}
         ],
         max_tokens: 2048,
         temperature: 0.7,
-        stream: true,
+        stream: false,
       }),
     });
 
@@ -95,46 +95,9 @@ ${platformPrompt}
       throw new Error(`Zhipu API error: ${response.status}`);
     }
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6);
-            if (dataStr === '[DONE]') {
-              res.write('data: [DONE]\n\n');
-              break;
-            }
-            try {
-              const result = JSON.parse(dataStr);
-              const content = result.choices?.[0]?.delta?.content;
-              if (content) {
-                res.write(`data: ${JSON.stringify({ content })}\n\n`);
-              }
-            } catch {
-              continue;
-            }
-          }
-        }
-      }
-    }
-
-    return res.end();
+    const result = await response.json();
+    const copywriting = result.choices?.[0]?.message?.content || '';
+    return res.status(200).json({ copywriting });
   } catch (error) {
     const message = error instanceof Error ? error.message : '生成失败';
     return res.status(500).json({ error: message });
