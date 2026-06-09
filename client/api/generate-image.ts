@@ -17,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { prompt, size, count, style } = req.body;
+    const { prompt, size, count, style, refImage } = req.body;
 
     if (!prompt?.trim()) {
       return res.status(400).json({ error: '请输入提示词' });
@@ -34,18 +34,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const styleSuffix = style && styleMap[style] ? ` (${styleMap[style]})` : '';
 
+    const body: Record<string, unknown> = {
+      model: 'gpt-image-2',
+      prompt: prompt + styleSuffix,
+      n: Math.min(count || 1, 4),
+      size: size || '1024x1024',
+    };
+
+    if (refImage) {
+      body.image_urls = [refImage];
+    }
+
     const response = await fetch(MANXIAOBAI_API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${MANXIAOBAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-image-2',
-        prompt: prompt + styleSuffix,
-        n: Math.min(count || 1, 4),
-        size: size || '1024x1024',
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
