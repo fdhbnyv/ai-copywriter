@@ -17,11 +17,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { prompt, size, count } = req.body;
+    const { prompt, size, count, style } = req.body;
 
     if (!prompt?.trim()) {
       return res.status(400).json({ error: '请输入提示词' });
     }
+
+    const styleMap: Record<string, string> = {
+      realistic: '写实摄影风格，真实光影和质感',
+      anime: '日本动漫风格，线条清晰，色彩鲜艳',
+      pixel: '像素艺术风格，像素块清晰可见',
+      '3d': '3D渲染风格，立体感强，材质真实',
+      watercolor: '水彩画风格，柔和的色彩过渡',
+      sketch: '铅笔线稿风格，黑白素描质感',
+    };
+
+    const styleSuffix = style && styleMap[style] ? ` (${styleMap[style]})` : '';
 
     const response = await fetch(MANXIAOBAI_API_URL, {
       method: 'POST',
@@ -31,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         model: 'gpt-image-2',
-        prompt,
+        prompt: prompt + styleSuffix,
         n: Math.min(count || 1, 4),
         size: size || '1024x1024',
       }),
