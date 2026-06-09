@@ -228,6 +228,7 @@ def generate_image():
 
         session = requests.Session()
         session.trust_env = False
+        session.proxies = {'http': '', 'https': ''}
         resp = session.post(MANXIAOBAI_API_URL, headers=headers, json=body, timeout=120)
         
         if resp.status_code != 200:
