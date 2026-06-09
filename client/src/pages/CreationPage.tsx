@@ -111,7 +111,7 @@ function CopywritingForm({ setCopywriting, setLoading }: { setCopywriting: (v: s
 
     setLoading(true)
     try {
-      const res = await fetch('https://ai-copywriter-production-74a7.up.railway.app/api/generate-text', {
+      const res = await fetch('/api/generate-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product, features, tone, audience, platform }),
@@ -223,7 +223,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt }: { setImageUrl
     setImageUrl(null)
 
     try {
-      const res = await fetch('https://ai-copywriter-production-74a7.up.railway.app/api/generate-image', {
+      const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, size, count, style, refImage, strength }),

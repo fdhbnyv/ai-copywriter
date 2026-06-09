@@ -1,7 +1,5 @@
 import type { GenerateRequest } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
 export async function generateCopywritingStream(
   data: GenerateRequest,
   onChunk: (text: string) => void,
@@ -12,7 +10,7 @@ export async function generateCopywritingStream(
   const endpoint = hasImage ? '/api/generate-image-text' : '/api/generate-text';
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,4 +82,27 @@ export async function generateCopywritingStream(
     const message = error instanceof Error ? error.message : '生成失败';
     onError(message);
   }
+}
+
+export async function generateImage(
+  prompt: string,
+  size: string = '1024x1024',
+  count: number = 1,
+  style?: string
+): Promise<{ url: string }[]> {
+  const response = await fetch('/api/generate-image', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ prompt, size, count, style }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || '图片生成失败');
+  }
+
+  const result = await response.json();
+  return result.images || [];
 }
