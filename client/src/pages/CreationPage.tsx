@@ -1,12 +1,27 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+
+interface ImageRecord {
+  url: string
+  prompt: string
+  time: number
+}
 
 export default function CreationPage() {
   const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState<'text' | 'image'>('text')
   const [loading, setLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [imageHistory, setImageHistory] = useState<ImageRecord[]>(() => {
+    try { return JSON.parse(localStorage.getItem('img-history') || '[]') } catch { return [] }
+  })
   const [copywriting, setCopywriting] = useState('')
   const [copied, setCopied] = useState(false)
+
+  useEffect(() => { localStorage.setItem('img-history', JSON.stringify(imageHistory)) }, [imageHistory])
+
+  const addToHistory = (url: string, p: string) => {
+    setImageHistory(prev => [{ url, prompt: p, time: Date.now() }, ...prev].slice(0, 50))
+  }
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-56px)]">
@@ -33,7 +48,7 @@ export default function CreationPage() {
         </div>
 
         <div className="space-y-4">
-          {mode === 'text' ? <CopywritingForm setCopywriting={setCopywriting} setLoading={setLoading} /> : <ImageForm setImageUrl={setImageUrl} setLoading={setLoading} prompt={prompt} setPrompt={setPrompt} />}
+          {mode === 'text' ? <CopywritingForm setCopywriting={setCopywriting} setLoading={setLoading} /> : <ImageForm setImageUrl={setImageUrl} setLoading={setLoading} prompt={prompt} setPrompt={setPrompt} onGenerated={addToHistory} />}
         </div>
       </aside>
 
@@ -96,12 +111,24 @@ export default function CreationPage() {
                     >
                       下载
                     </button>
-                    <button className="px-4 py-1.5 text-sm border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
-                      重新生成
-                    </button>
                   </div>
                 </div>
                 <img src={imageUrl} alt="生成的图片" className="w-full rounded-xl border border-[var(--border-default)]" />
+                {imageHistory.length > 1 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm text-[var(--text-secondary)] mb-3">历史记录 ({imageHistory.length})</h4>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {imageHistory.slice(1).map((item, i) => (
+                        <button key={item.time} onClick={() => setImageUrl(item.url)} className="relative group rounded-lg overflow-hidden border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-colors">
+                          <img src={item.url} alt="" className="w-full aspect-square object-cover" />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end">
+                            <span className="text-[10px] text-white/80 px-2 py-1 truncate w-full opacity-0 group-hover:opacity-100 transition-opacity">{item.prompt}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-[var(--text-muted)]">
@@ -213,7 +240,7 @@ function CopywritingForm({ setCopywriting, setLoading }: { setCopywriting: (v: s
   )
 }
 
-function ImageForm({ setImageUrl, setLoading, prompt, setPrompt }: { setImageUrl: (v: string | null) => void; setLoading: (v: boolean) => void; prompt: string; setPrompt: (v: string) => void }) {
+function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: { setImageUrl: (v: string | null) => void; setLoading: (v: boolean) => void; prompt: string; setPrompt: (v: string) => void; onGenerated: (url: string, prompt: string) => void }) {
   const [size, setSize] = useState('1024x1024')
   const [count, setCount] = useState(1)
   const [style, setStyle] = useState('realistic')
@@ -250,6 +277,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt }: { setImageUrl
       const data = await res.json()
       if (data.images && data.images.length > 0) {
         setImageUrl(data.images[0].url)
+        onGenerated(data.images[0].url, prompt)
       } else if (data.error) {
         setImageUrl(null)
         alert(`生成失败: ${data.error}`)
