@@ -204,6 +204,9 @@ def generate_image_text():
 @app.route('/api/generate-image', methods=['POST'])
 def generate_image():
     """图片生成 API"""
+    import http.client
+    import ssl
+
     try:
         data = request.json
         prompt = data.get('prompt', '').strip()
@@ -214,28 +217,28 @@ def generate_image():
         if not prompt:
             return jsonify({'error': '请输入提示词'}), 400
 
-        headers = {
-            'Authorization': f'Bearer {MANXIAOBAI_API_KEY}',
-            'Content-Type': 'application/json',
-        }
-
-        body = {
+        body = json.dumps({
             'model': 'gpt-image-2',
             'prompt': prompt,
             'n': min(count, 4),
             'size': size,
-        }
+        })
 
-        session = requests.Session()
-        session.trust_env = False
-        session.proxies = {'http': '', 'https': ''}
-        resp = session.post(MANXIAOBAI_API_URL, headers=headers, json=body, timeout=120)
-        
-        if resp.status_code != 200:
-            err = resp.json().get('error', {})
-            return jsonify({'error': f'图片生成失败: {err.get("message", resp.text)}'}), 500
+        ctx = ssl.create_default_context()
+        conn = http.client.HTTPSConnection('api.manxiaobai.online', timeout=120, context=ctx)
+        conn.request('POST', '/v1/images/generations', body=body, headers={
+            'Authorization': f'Bearer {MANXIAOBAI_API_KEY}',
+            'Content-Type': 'application/json',
+        })
 
-        result = resp.json()
+        resp = conn.getresponse()
+        result = json.loads(resp.read().decode('utf-8'))
+        conn.close()
+
+        if resp.status != 200:
+            err = result.get('error', {})
+            return jsonify({'error': f'图片生成失败: {err.get("message", str(err))}'}), 500
+
         return jsonify({'images': result.get('data', [])})
 
     except Exception as e:
