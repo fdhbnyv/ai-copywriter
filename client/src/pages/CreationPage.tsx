@@ -6,6 +6,7 @@ export default function CreationPage() {
   const [loading, setLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [copywriting, setCopywriting] = useState('')
+  const [copied, setCopied] = useState(false)
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-56px)]">
@@ -49,10 +50,15 @@ export default function CreationPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">生成结果</h3>
                   <button
-                    onClick={() => navigator.clipboard.writeText(copywriting)}
-                    className="px-4 py-1.5 text-sm border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    onClick={() => {
+                      navigator.clipboard.writeText(copywriting)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                    className="px-4 py-1.5 text-sm border rounded-lg transition-colors"
+                    style={{ borderColor: copied ? 'var(--accent-success)' : 'var(--border-default)', color: copied ? 'var(--accent-success)' : 'var(--text-secondary)' }}
                   >
-                    复制文案
+                    {copied ? '✓ 复制成功' : '复制文案'}
                   </button>
                 </div>
                 <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-5 text-left whitespace-pre-wrap leading-relaxed">
