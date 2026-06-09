@@ -226,7 +226,9 @@ def generate_image():
             'size': size,
         }
 
-        resp = requests.post(MANXIAOBAI_API_URL, headers=headers, json=body, timeout=120)
+        session = requests.Session()
+        session.trust_env = False
+        resp = session.post(MANXIAOBAI_API_URL, headers=headers, json=body, timeout=120)
         
         if resp.status_code != 200:
             err = resp.json().get('error', {})
