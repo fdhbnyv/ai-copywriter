@@ -272,21 +272,25 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
   const [size, setSize] = useState('1024x1024')
   const [count, setCount] = useState(1)
   const [style, setStyle] = useState('realistic')
-  const [refImage, setRefImage] = useState<string | null>(null)
+  const [refImages, setRefImages] = useState<string[]>([])
   const [strength, setStrength] = useState(70)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onloadend = () => setRefImage(reader.result as string)
-    reader.readAsDataURL(file)
+    const files = e.target.files
+    if (!files) return
+    Array.from(files).forEach(file => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setRefImages(prev => [...prev, reader.result as string].slice(0, 16))
+      }
+      reader.readAsDataURL(file)
+    })
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const handleRemoveRef = () => {
-    setRefImage(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+  const handleRemoveRef = (index: number) => {
+    setRefImages(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -300,7 +304,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
       const res = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, size, count, style, refImage, strength }),
+        body: JSON.stringify({ prompt, size, count, style, refImages, strength }),
       })
       const data = await res.json()
       if (data.images && data.images.length > 0) {
@@ -352,17 +356,29 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
       </div>
 
       <div>
-        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">参考图片（可选 / 图生图模式）</label>
-        {refImage ? (
-          <div className="relative mb-2">
-            <img src={refImage} alt="参考图" className="w-full h-40 object-cover rounded-lg border border-[var(--border-default)]" />
-            <button
-              type="button"
-              onClick={handleRemoveRef}
-              className="absolute top-2 right-2 w-7 h-7 bg-black/60 text-white rounded-full flex items-center justify-center text-sm hover:bg-black/80"
-            >
-              ×
-            </button>
+        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">参考图片（可选 / 最多16张）</label>
+        {refImages.length > 0 ? (
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            {refImages.map((img, i) => (
+              <div key={i} className="relative">
+                <img src={img} alt={`参考图${i + 1}`} className="w-full h-24 object-cover rounded-lg border border-[var(--border-default)]" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRef(i)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-xs hover:bg-black/80"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {refImages.length < 16 && (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="h-24 border-2 border-dashed border-[var(--border-default)] rounded-lg flex flex-col items-center justify-center text-[var(--text-muted)] hover:border-[var(--accent-primary)] hover:text-[var(--text-secondary)] transition-colors cursor-pointer"
+              >
+                <span className="text-xl">+</span>
+              </div>
+            )}
           </div>
         ) : (
           <div
@@ -377,6 +393,10 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
           type="file"
           ref={fileInputRef}
           accept="image/*"
+          multiple
+          onChange={handleFileChange}
+          className="hidden"
+        />
           onChange={handleFileChange}
           className="hidden"
         />

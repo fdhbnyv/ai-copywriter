@@ -17,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { prompt, size, count, style, refImage } = req.body;
+    const { prompt, size, count, style, refImages } = req.body;
 
     if (!prompt?.trim()) {
       return res.status(400).json({ error: '请输入提示词' });
@@ -41,8 +41,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       size: size || '1024x1024',
     };
 
-    if (refImage) {
-      body.image_urls = [refImage];
+    if (refImages && refImages.length > 0) {
+      body.image_urls = refImages.slice(0, 16);
     }
 
     const response = await fetch(MANXIAOBAI_API_URL, {
