@@ -317,7 +317,13 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
     }
   }
 
-  const sizeOptions = ['1024x1024', '1024x1792', '1792x1024', '768x1024', '1024x768']
+  const sizeOptions = [
+    { v: '1024x1024', l: '1024×1024 (方形)' },
+    { v: '1024x1792', l: '1024×1792 (竖版)' },
+    { v: '1792x1024', l: '1792×1024 (横版)' },
+    { v: '768x1024', l: '768×1024 (竖版)' },
+    { v: '1024x768', l: '1024×768 (横版)' },
+  ]
   const styleOptions = [
     { v: 'realistic', l: '写实' },
     { v: 'anime', l: '动漫' },
@@ -413,7 +419,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
             value={size} onChange={(e) => setSize(e.target.value)}
             className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-active)] transition-colors"
           >
-            {sizeOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+            {sizeOptions.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
           </select>
         </div>
         <div>
