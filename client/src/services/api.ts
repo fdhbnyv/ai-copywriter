@@ -26,7 +26,7 @@ export async function generateCopywritingStream(
     }
 
     const contentType = response.headers.get('content-type') || '';
-    
+
     if (contentType.includes('text/event-stream')) {
       const reader = response.body?.getReader();
       if (!reader) {
@@ -38,23 +38,23 @@ export async function generateCopywritingStream(
 
       while (true) {
         const { done, value } = await reader.read();
-        
+
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        
+
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const dataStr = line.slice(6);
-            
+
             if (dataStr === '[DONE]') {
               onDone();
               return;
             }
-            
+
             try {
               const parsed = JSON.parse(dataStr);
               if (parsed.content) {
@@ -69,13 +69,14 @@ export async function generateCopywritingStream(
       onDone();
     } else {
       const result = await response.json();
-      if (result.copywriting) {
-        const text = result.copywriting;
-        const chunkSize = 3;
-        for (let i = 0; i < text.length; i += chunkSize) {
-          await new Promise(r => setTimeout(r, 20));
-          onChunk(text.slice(i, i + chunkSize));
-        }
+      const text = result.copywriting || result.error || '';
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      const chunkSize = 3;
+      for (let i = 0; i < text.length; i += chunkSize) {
+        await new Promise(r => setTimeout(r, 20));
+        onChunk(text.slice(i, i + chunkSize));
       }
       onDone();
     }
