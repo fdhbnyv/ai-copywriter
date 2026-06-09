@@ -86,17 +86,11 @@ export default function CreationPage() {
                   <h3 className="text-lg font-semibold">生成结果</h3>
                   <div className="flex gap-2">
                     <button
-                      onClick={async () => {
-                        try {
-                          const res = await fetch(imageUrl)
-                          const blob = await res.blob()
-                          const url = URL.createObjectURL(blob)
-                          const a = document.createElement('a')
-                          a.href = url
-                          a.download = `ai-${Date.now()}.png`
-                          a.click()
-                          URL.revokeObjectURL(url)
-                        } catch {}
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = `/api/proxy-download?url=${encodeURIComponent(imageUrl)}`
+                        link.download = `ai-${Date.now()}.png`
+                        link.click()
                       }}
                       className="px-4 py-1.5 text-sm border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                     >
