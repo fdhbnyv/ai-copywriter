@@ -6,6 +6,12 @@ interface ImageRecord {
   time: number
 }
 
+interface TextRecord {
+  text: string
+  product: string
+  time: number
+}
+
 export default function CreationPage() {
   const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState<'text' | 'image'>('text')
@@ -15,12 +21,20 @@ export default function CreationPage() {
     try { return JSON.parse(localStorage.getItem('img-history') || '[]') } catch { return [] }
   })
   const [copywriting, setCopywriting] = useState('')
+  const [copyHistory, setCopyHistory] = useState<TextRecord[]>(() => {
+    try { return JSON.parse(localStorage.getItem('copy-history') || '[]') } catch { return [] }
+  })
   const [copied, setCopied] = useState(false)
 
   useEffect(() => { localStorage.setItem('img-history', JSON.stringify(imageHistory)) }, [imageHistory])
+  useEffect(() => { localStorage.setItem('copy-history', JSON.stringify(copyHistory)) }, [copyHistory])
 
   const addToHistory = (url: string, p: string) => {
     setImageHistory(prev => [{ url, prompt: p, time: Date.now() }, ...prev].slice(0, 50))
+  }
+
+  const addTextToHistory = (text: string, product: string) => {
+    setCopyHistory(prev => [{ text, product, time: Date.now() }, ...prev].slice(0, 50))
   }
 
   return (
@@ -48,7 +62,7 @@ export default function CreationPage() {
         </div>
 
         <div className="space-y-4">
-          {mode === 'text' ? <CopywritingForm setCopywriting={setCopywriting} setLoading={setLoading} /> : <ImageForm setImageUrl={setImageUrl} setLoading={setLoading} prompt={prompt} setPrompt={setPrompt} onGenerated={addToHistory} />}
+          {mode === 'text' ? <CopywritingForm setCopywriting={setCopywriting} setLoading={setLoading} onGenerated={addTextToHistory} /> : <ImageForm setImageUrl={setImageUrl} setLoading={setLoading} prompt={prompt} setPrompt={setPrompt} onGenerated={addToHistory} />}
         </div>
       </aside>
 
@@ -79,6 +93,19 @@ export default function CreationPage() {
                 <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-5 text-left whitespace-pre-wrap leading-relaxed">
                   {copywriting}
                 </div>
+                {copyHistory.length > 1 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm text-[var(--text-secondary)] mb-3">历史记录 ({copyHistory.length})</h4>
+                    <div className="space-y-2">
+                      {copyHistory.slice(1).map((item) => (
+                        <button key={item.time} onClick={() => setCopywriting(item.text)} className="w-full text-left p-3 rounded-lg border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-colors">
+                          <div className="text-xs text-[var(--text-muted)] mb-1">{item.product}</div>
+                          <div className="text-sm text-[var(--text-secondary)] truncate">{item.text.slice(0, 80)}...</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-[var(--text-muted)]">
@@ -144,7 +171,7 @@ export default function CreationPage() {
   )
 }
 
-function CopywritingForm({ setCopywriting, setLoading }: { setCopywriting: (v: string) => void; setLoading: (v: boolean) => void }) {
+function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopywriting: (v: string) => void; setLoading: (v: boolean) => void; onGenerated: (text: string, product: string) => void }) {
   const [product, setProduct] = useState('')
   const [features, setFeatures] = useState('')
   const [tone, setTone] = useState('professional')
@@ -165,6 +192,7 @@ function CopywritingForm({ setCopywriting, setLoading }: { setCopywriting: (v: s
       const data = await res.json()
       if (data.copywriting) {
         setCopywriting(data.copywriting)
+        onGenerated(data.copywriting, product)
       } else if (data.error) {
         setCopywriting(`错误: ${data.error}`)
       }
