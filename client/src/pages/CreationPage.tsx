@@ -39,7 +39,12 @@ export default function CreationPage() {
       <main className="flex-1 p-5 overflow-y-auto">
         {mode === 'text' ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
-            {copywriting ? (
+            {loading ? (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 border-4 border-[var(--border-default)] border-t-[var(--accent-primary)] rounded-full animate-spin" />
+                <p className="text-[var(--text-secondary)]">AI 正在生成中...</p>
+              </div>
+            ) : copywriting ? (
               <div className="w-full max-w-2xl">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">生成结果</h3>
