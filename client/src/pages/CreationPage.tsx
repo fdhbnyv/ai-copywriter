@@ -85,7 +85,21 @@ export default function CreationPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">生成结果</h3>
                   <div className="flex gap-2">
-                    <button className="px-4 py-1.5 text-sm border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(imageUrl)
+                          const blob = await res.blob()
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = `ai-${Date.now()}.png`
+                          a.click()
+                          URL.revokeObjectURL(url)
+                        } catch {}
+                      }}
+                      className="px-4 py-1.5 text-sm border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    >
                       下载
                     </button>
                     <button className="px-4 py-1.5 text-sm border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
