@@ -93,13 +93,13 @@ export default function CreationPage() {
                 <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-5 text-left whitespace-pre-wrap leading-relaxed">
                   {copywriting}
                 </div>
-                {copyHistory.length > 1 && (
+                {copyHistory.length > 0 && (
                   <div className="mt-6">
                     <h4 className="text-sm text-[var(--text-secondary)] mb-3">历史记录 ({copyHistory.length})</h4>
                     <div className="space-y-2">
-                      {copyHistory.slice(1).map((item) => (
-                        <button key={item.time} onClick={() => setCopywriting(item.text)} className="w-full text-left p-3 rounded-lg border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-colors">
-                          <div className="text-xs text-[var(--text-muted)] mb-1">{item.product}</div>
+                      {copyHistory.map((item, idx) => (
+                        <button key={item.time} onClick={() => setCopywriting(item.text)} className={`w-full text-left p-3 rounded-lg border transition-colors ${idx === 0 ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/5' : 'border-[var(--border-default)] hover:border-[var(--accent-primary)]'}`}>
+                          <div className="text-xs text-[var(--text-muted)] mb-1">{item.product} · {new Date(item.time).toLocaleString('zh-CN')}</div>
                           <div className="text-sm text-[var(--text-secondary)] truncate">{item.text.slice(0, 80)}...</div>
                         </button>
                       ))}
@@ -141,12 +141,12 @@ export default function CreationPage() {
                   </div>
                 </div>
                 <img src={imageUrl} alt="生成的图片" className="w-full rounded-xl border border-[var(--border-default)]" />
-                {imageHistory.length > 1 && (
+                {imageHistory.length > 0 && (
                   <div className="mt-6">
                     <h4 className="text-sm text-[var(--text-secondary)] mb-3">历史记录 ({imageHistory.length})</h4>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      {imageHistory.slice(1).map((item, i) => (
-                        <button key={item.time} onClick={() => setImageUrl(item.url)} className="relative group rounded-lg overflow-hidden border border-[var(--border-default)] hover:border-[var(--accent-primary)] transition-colors">
+                      {imageHistory.map((item) => (
+                        <button key={item.time} onClick={() => setImageUrl(item.url)} className={`relative group rounded-lg overflow-hidden border transition-colors ${item.url === imageUrl ? 'border-[var(--accent-primary)] ring-1 ring-[var(--accent-primary)]' : 'border-[var(--border-default)] hover:border-[var(--accent-primary)]'}`}>
                           <img src={item.url} alt="" className="w-full aspect-square object-cover" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end">
                             <span className="text-[10px] text-white/80 px-2 py-1 truncate w-full opacity-0 group-hover:opacity-100 transition-opacity">{item.prompt}</span>
