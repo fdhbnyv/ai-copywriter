@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const ZHIPU_API_KEY = process.env.ZHIPU_API_KEY || '';
 const ZHIPU_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const MODEL = 'glm-4.6v';
+const MODEL = 'glm-4.6v-flash';
 
 const SYSTEM_PROMPT = `你是一位专业的营销文案撰写专家。请根据用户提供的产品信息和特点，生成吸引人的营销文案。
 
