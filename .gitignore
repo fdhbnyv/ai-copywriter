@@ -3,6 +3,8 @@ dist/
 .vercel
 .env
 .env.local
+client/.env.local
+client/.env.production
 *.pyc
 __pycache__/
 *.py[cod]
@@ -19,3 +21,4 @@ venv/
 .DS_Store
 Thumbs.db
 uploads/
+output/

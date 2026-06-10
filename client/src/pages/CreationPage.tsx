@@ -397,10 +397,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
           onChange={handleFileChange}
           className="hidden"
         />
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        {refImage && (
+        {refImages && refImages.length > 0 && (
           <div className="flex items-center gap-3 mt-2">
             <span className="text-xs text-[var(--text-secondary)] shrink-0">参考强度</span>
             <input
