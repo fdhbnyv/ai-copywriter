@@ -57,7 +57,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         Authorization: `Bearer ${MANXIAOBAI_API_KEY}`,
       },
       body: formData,
-      signal: AbortSignal.timeout(25000),
     });
 
     if (!apiRes.ok) {
