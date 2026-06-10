@@ -41,10 +41,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       size: size || '1024x1024',
     };
 
-    if (refImages && refImages.length > 0) {
-      body.image_urls = refImages.slice(0, 16);
-    }
-
     const response = await fetch(MANXIAOBAI_API_URL, {
       method: 'POST',
       headers: {
