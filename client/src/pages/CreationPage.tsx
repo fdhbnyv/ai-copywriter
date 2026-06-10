@@ -301,10 +301,12 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
     setImageUrl(null)
 
     try {
-      const res = await fetch('/api/generate-image', {
+      const hasRefImages = refImages.length > 0
+      const endpoint = hasRefImages ? '/api/edit-image' : '/api/generate-image'
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, size, count, style, refImages, strength }),
+        body: JSON.stringify(hasRefImages ? { prompt, size, count, style, refImages } : { prompt, size, count, style }),
       })
       const data = await res.json()
       if (data.images && data.images.length > 0) {
