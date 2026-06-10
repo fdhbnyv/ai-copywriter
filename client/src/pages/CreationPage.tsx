@@ -1,3 +1,4 @@
+import { getApiBase } from '../utils/apiBase'
 import { useState, useRef, useEffect } from 'react'
 
 interface ImageRecord {
@@ -130,7 +131,7 @@ export default function CreationPage() {
                     <button
                       onClick={() => {
                         const link = document.createElement('a')
-                        link.href = `/api/proxy-download?url=${encodeURIComponent(imageUrl)}`
+                        link.href = `${getApiBase()}/api/proxy-download?url=${encodeURIComponent(imageUrl)}`
                         link.download = `ai-${Date.now()}.png`
                         link.click()
                       }}
@@ -184,7 +185,7 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
 
     setLoading(true)
     try {
-      const res = await fetch('/api/generate-text', {
+      const res = await fetch(`${getApiBase()}/api/generate-text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product, features, tone, audience, platform }),
@@ -302,7 +303,8 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
 
     try {
       const hasRefImages = refImages.length > 0
-      const endpoint = hasRefImages ? '/api/edit-image' : '/api/generate-image'
+      const base = getApiBase()
+      const endpoint = hasRefImages ? `${base}/api/edit-image` : `${base}/api/generate-image`
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

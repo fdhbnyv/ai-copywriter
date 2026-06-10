@@ -1,4 +1,5 @@
 import type { GenerateRequest } from '../types';
+import { getApiBase } from '../utils/apiBase';
 
 export async function generateCopywritingStream(
   data: GenerateRequest,
@@ -7,7 +8,8 @@ export async function generateCopywritingStream(
   onError: (error: string) => void
 ): Promise<void> {
   const hasImage = !!data.image;
-  const endpoint = hasImage ? '/api/generate-image-text' : '/api/generate-text';
+  const base = getApiBase();
+  const endpoint = `${base}${hasImage ? '/api/generate-image-text' : '/api/generate-text'}`;
 
   try {
     const response = await fetch(endpoint, {
@@ -90,7 +92,7 @@ export async function generateImage(
   count: number = 1,
   style?: string
 ): Promise<{ url: string }[]> {
-  const response = await fetch('/api/generate-image', {
+  const response = await fetch(`${getApiBase()}/api/generate-image`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
