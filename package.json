@@ -1,0 +1,17 @@
+{
+  "name": "ai-copywriter",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "npx vercel dev"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  }
+}
