@@ -17,6 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    if (!MANXIAOBAI_API_KEY) {
+      return res.status(500).json({ error: 'MANXIAOBAI_API_KEY 未配置' });
+    }
+
     const { prompt, size, count, style, refImages } = req.body;
 
     if (!prompt?.trim()) {
@@ -48,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(20000),
     });
 
     if (!response.ok) {
