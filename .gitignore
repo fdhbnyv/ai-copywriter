@@ -22,3 +22,5 @@ venv/
 Thumbs.db
 uploads/
 output/
+
+.vercel
