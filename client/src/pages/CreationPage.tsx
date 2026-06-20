@@ -1,5 +1,6 @@
 import { getApiBase } from '../utils/apiBase'
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 interface ImageRecord {
   url: string
@@ -14,8 +15,9 @@ interface TextRecord {
 }
 
 export default function CreationPage() {
-  const [prompt, setPrompt] = useState('')
-  const [mode, setMode] = useState<'text' | 'image'>('text')
+  const [searchParams] = useSearchParams()
+  const [prompt, setPrompt] = useState(() => searchParams.get('prompt') || '')
+  const [mode, setMode] = useState<'text' | 'image'>(searchParams.get('prompt') ? 'image' : 'text')
   const [loading, setLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [imageHistory, setImageHistory] = useState<ImageRecord[]>(() => {
