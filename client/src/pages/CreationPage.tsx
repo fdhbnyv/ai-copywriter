@@ -39,68 +39,122 @@ export default function CreationPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-56px)]">
-      <aside className="w-full lg:w-[400px] xl:w-[440px] shrink-0 border-b lg:border-b-0 lg:border-r border-[var(--border-default)] p-5 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">生成控制台</h2>
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] bg-[var(--bg-primary)]">
+      {/* 左侧面板 — 漫画风 */}
+      <aside className="w-full lg:w-[420px] xl:w-[460px] shrink-0 border-r-[3px] border-[#1A1A1A] p-5 overflow-y-auto bg-[var(--bg-card)]">
+        <h2
+          className="text-2xl mb-5 text-[var(--accent-primary)] flex items-center gap-2"
+          style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.03em', textShadow: '2px 2px 0px rgba(26,26,26,0.2)' }}
+        >
+          <span>⚡</span> 生成控制台
+        </h2>
 
-        <div className="flex gap-1 mb-5 bg-[var(--bg-card)] p-1 rounded-lg">
+        {/* 模式切换 — 漫画式 tab */}
+        <div className="flex gap-1 mb-5 p-1" style={{ border: '3px solid #1A1A1A', background: '#FFEAA7', boxShadow: '3px 3px 0px #1A1A1A' }}>
           <button
             onClick={() => setMode('text')}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-              mode === 'text' ? 'bg-[var(--accent-primary)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
+            className="flex-1 py-2.5 text-base transition-all duration-100"
+            style={{
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '0.02em',
+              border: mode === 'text' ? '3px solid #1A1A1A' : '3px solid transparent',
+              background: mode === 'text' ? 'var(--accent-primary)' : 'transparent',
+              color: mode === 'text' ? '#FFFFFF' : '#1A1A1A',
+              boxShadow: mode === 'text' ? '3px 3px 0px #1A1A1A' : 'none',
+              transform: mode === 'text' ? 'translate(-1px, -1px)' : 'none',
+            }}
           >
-            ✍ 文案生成
+            ✏️ 文案生成
           </button>
           <button
             onClick={() => setMode('image')}
-            className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-              mode === 'image' ? 'bg-[var(--accent-primary)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-            }`}
+            className="flex-1 py-2.5 text-base transition-all duration-100"
+            style={{
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '0.02em',
+              border: mode === 'image' ? '3px solid #1A1A1A' : '3px solid transparent',
+              background: mode === 'image' ? 'var(--accent-primary)' : 'transparent',
+              color: mode === 'image' ? '#FFFFFF' : '#1A1A1A',
+              boxShadow: mode === 'image' ? '3px 3px 0px #1A1A1A' : 'none',
+              transform: mode === 'image' ? 'translate(-1px, -1px)' : 'none',
+            }}
           >
             🎨 图片生成
           </button>
         </div>
 
         <div className="space-y-4">
-          {mode === 'text' ? <CopywritingForm setCopywriting={setCopywriting} setLoading={setLoading} onGenerated={addTextToHistory} /> : <ImageForm setImageUrl={setImageUrl} setLoading={setLoading} prompt={prompt} setPrompt={setPrompt} onGenerated={addToHistory} />}
+          {mode === 'text'
+            ? <CopywritingForm setCopywriting={setCopywriting} setLoading={setLoading} onGenerated={addTextToHistory} />
+            : <ImageForm setImageUrl={setImageUrl} setLoading={setLoading} prompt={prompt} setPrompt={setPrompt} onGenerated={addToHistory} />
+          }
         </div>
       </aside>
 
-      <main className="flex-1 p-5 overflow-y-auto">
+      {/* 右侧主内容区 — 漫画风 */}
+      <main className="flex-1 p-6 overflow-y-auto bg-[var(--bg-primary)] bg-comic-dots-light">
         {mode === 'text' ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             {loading ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 border-4 border-[var(--border-default)] border-t-[var(--accent-primary)] rounded-full animate-spin" />
-                <p className="text-[var(--text-secondary)]">AI 正在生成中...</p>
+              <div className="flex flex-col items-center gap-5">
+                <div className="relative">
+                  <div className="w-20 h-20 border-[4px] border-[#1A1A1A] border-t-[var(--accent-primary)] animate-comic-spin rounded-full" />
+                  <span className="absolute inset-0 flex items-center justify-center text-2xl">✏️</span>
+                </div>
+                <p
+                  className="text-lg animate-comic-pulse"
+                  style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-primary)' }}
+                >
+                  AI 正在构思中...
+                </p>
               </div>
             ) : copywriting ? (
               <div className="w-full max-w-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">生成结果</h3>
+                  <h3
+                    className="text-xl flex items-center gap-2"
+                    style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
+                  >
+                    <span>📝</span> 生成结果
+                  </h3>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(copywriting)
                       setCopied(true)
                       setTimeout(() => setCopied(false), 2000)
                     }}
-                    className="px-4 py-1.5 text-sm border rounded-lg transition-colors"
-                    style={{ borderColor: copied ? 'var(--accent-success)' : 'var(--border-default)', color: copied ? 'var(--accent-success)' : 'var(--text-secondary)' }}
+                    className="comic-btn px-5 py-2 text-sm bg-[var(--accent-success)] text-white"
                   >
-                    {copied ? '✓ 复制成功' : '复制文案'}
+                    {copied ? '✓ 复制成功!' : '📋 复制文案'}
                   </button>
                 </div>
-                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-5 text-left whitespace-pre-wrap leading-relaxed">
+                <div
+                  className="comic-card p-5 text-left whitespace-pre-wrap leading-relaxed text-base bg-[var(--bg-card)]"
+                  style={{ minHeight: '120px' }}
+                >
                   {copywriting}
                 </div>
                 {copyHistory.length > 0 && (
                   <div className="mt-6">
-                    <h4 className="text-sm text-[var(--text-secondary)] mb-3">历史记录 ({copyHistory.length})</h4>
+                    <h4
+                      className="text-base mb-3 flex items-center gap-2"
+                      style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
+                    >
+                      <span>📚</span> 历史记录 ({copyHistory.length})
+                    </h4>
                     <div className="space-y-2">
                       {copyHistory.map((item, idx) => (
-                        <button key={item.time} onClick={() => setCopywriting(item.text)} className={`w-full text-left p-3 rounded-lg border transition-colors ${idx === 0 ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/5' : 'border-[var(--border-default)] hover:border-[var(--accent-primary)]'}`}>
-                          <div className="text-xs text-[var(--text-muted)] mb-1">{item.product} · {new Date(item.time).toLocaleString('zh-CN')}</div>
+                        <button
+                          key={item.time}
+                          onClick={() => setCopywriting(item.text)}
+                          className="w-full text-left p-3 comic-border-sm transition-all duration-100 hover:translate-x-[1px] hover:translate-y-[1px]"
+                          style={{
+                            background: idx === 0 ? '#FFEAA7' : '#FFFFFF',
+                          }}
+                        >
+                          <div className="text-xs text-[var(--text-muted)] mb-1" style={{ fontFamily: 'var(--font-body)' }}>
+                            🏷️ {item.product} · {new Date(item.time).toLocaleString('zh-CN')}
+                          </div>
                           <div className="text-sm text-[var(--text-secondary)] truncate">{item.text.slice(0, 80)}...</div>
                         </button>
                       ))}
@@ -110,47 +164,78 @@ export default function CreationPage() {
               </div>
             ) : (
               <div className="text-[var(--text-muted)]">
-                <div className="text-6xl mb-4 opacity-30">✍</div>
-                <p className="text-lg">输入产品信息，开始创作文案</p>
-                <p className="text-sm mt-2">AI 将根据你的需求生成营销文案</p>
+                <div className="text-7xl mb-4 animate-comic-bounce">✏️</div>
+                <p className="text-xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+                  输入产品信息，开始创作文案
+                </p>
+                <p className="text-base mt-2 text-[var(--text-secondary)]">AI 将根据你的需求生成营销文案</p>
               </div>
             )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center">
             {loading ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 border-4 border-[var(--border-default)] border-t-[var(--accent-primary)] rounded-full animate-spin" />
-                <p className="text-[var(--text-secondary)]">AI 正在生成中...</p>
+              <div className="flex flex-col items-center gap-5">
+                <div className="relative">
+                  <div className="w-20 h-20 border-[4px] border-[#1A1A1A] border-t-[var(--accent-primary)] animate-comic-spin rounded-full" />
+                  <span className="absolute inset-0 flex items-center justify-center text-2xl">🎨</span>
+                </div>
+                <p
+                  className="text-lg animate-comic-pulse"
+                  style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-primary)' }}
+                >
+                  AI 正在绘制中...
+                </p>
               </div>
             ) : imageUrl ? (
               <div className="w-full max-w-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">生成结果</h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        const link = document.createElement('a')
-                        link.href = `${getApiBase()}/api/proxy-download?url=${encodeURIComponent(imageUrl)}`
-                        link.download = `ai-${Date.now()}.png`
-                        link.click()
-                      }}
-                      className="px-4 py-1.5 text-sm border border-[var(--border-default)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                    >
-                      下载
-                    </button>
-                  </div>
+                  <h3
+                    className="text-xl flex items-center gap-2"
+                    style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
+                  >
+                    <span>🖼️</span> 生成结果
+                  </h3>
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a')
+                      link.href = `${getApiBase()}/api/proxy-download?url=${encodeURIComponent(imageUrl)}`
+                      link.download = `ai-${Date.now()}.png`
+                      link.click()
+                    }}
+                    className="comic-btn px-5 py-2 text-sm bg-[var(--accent-secondary)] text-white"
+                  >
+                    ⬇️ 下载
+                  </button>
                 </div>
-                <img src={imageUrl} alt="生成的图片" className="w-full rounded-xl border border-[var(--border-default)]" />
+                <div className="comic-card p-2 bg-[var(--bg-card)]">
+                  <img src={imageUrl} alt="生成的图片" className="w-full border-2 border-[#1A1A1A]" />
+                </div>
                 {imageHistory.length > 0 && (
                   <div className="mt-6">
-                    <h4 className="text-sm text-[var(--text-secondary)] mb-3">历史记录 ({imageHistory.length})</h4>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <h4
+                      className="text-base mb-3 flex items-center gap-2"
+                      style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
+                    >
+                      <span>🖼️</span> 历史记录 ({imageHistory.length})
+                    </h4>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                       {imageHistory.map((item) => (
-                        <button key={item.time} onClick={() => setImageUrl(item.url)} className={`relative group rounded-lg overflow-hidden border transition-colors ${item.url === imageUrl ? 'border-[var(--accent-primary)] ring-1 ring-[var(--accent-primary)]' : 'border-[var(--border-default)] hover:border-[var(--accent-primary)]'}`}>
-                          <img src={item.url} alt="" className="w-full aspect-square object-cover" />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-end">
-                            <span className="text-[10px] text-white/80 px-2 py-1 truncate w-full opacity-0 group-hover:opacity-100 transition-opacity">{item.prompt}</span>
+                        <button
+                          key={item.time}
+                          onClick={() => setImageUrl(item.url)}
+                          className="relative group comic-border-sm overflow-hidden transition-all duration-100 hover:translate-x-[1px] hover:translate-y-[1px]"
+                          style={{
+                            background: '#FFFFFF',
+                            borderColor: item.url === imageUrl ? 'var(--accent-primary)' : '#1A1A1A',
+                            boxShadow: item.url === imageUrl ? '3px 3px 0px var(--accent-primary)' : '3px 3px 0px #1A1A1A',
+                          }}
+                        >
+                          <img src={item.url} alt="" className="w-full aspect-square object-cover border-b-2 border-[#1A1A1A]" />
+                          <div className="p-1.5">
+                            <span className="text-[10px] text-[var(--text-muted)] truncate block" style={{ fontFamily: 'var(--font-body)' }}>
+                              {item.prompt}
+                            </span>
                           </div>
                         </button>
                       ))}
@@ -160,9 +245,11 @@ export default function CreationPage() {
               </div>
             ) : (
               <div className="text-[var(--text-muted)]">
-                <div className="text-6xl mb-4 opacity-30">🎨</div>
-                <p className="text-lg">输入提示词，开始生成图片</p>
-                <p className="text-sm mt-2">AI 将把你的创意变成视觉作品</p>
+                <div className="text-7xl mb-4 animate-comic-bounce">🎨</div>
+                <p className="text-xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+                  输入提示词，开始生成图片
+                </p>
+                <p className="text-base mt-2 text-[var(--text-secondary)]">AI 将把你的创意变成视觉作品</p>
               </div>
             )}
           </div>
@@ -207,51 +294,68 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">产品名称</label>
+        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+          🏷️ 产品名称
+        </label>
         <input
           value={product} onChange={(e) => setProduct(e.target.value)}
           placeholder="例如：无线蓝牙耳机"
-          className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-active)] transition-colors"
+          className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
         />
       </div>
       <div>
-        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">产品特点</label>
+        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+          ⭐ 产品特点
+        </label>
         <textarea
           value={features} onChange={(e) => setFeatures(e.target.value)}
           placeholder="描述核心卖点..."
           rows={3}
-          className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-active)] transition-colors resize-none"
+          className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)] resize-none"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm text-[var(--text-secondary)] mb-1.5">目标群体</label>
+          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+            👥 目标群体
+          </label>
           <input
             value={audience} onChange={(e) => setAudience(e.target.value)}
             placeholder="如：年轻人"
-            className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-active)] transition-colors"
+            className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
           />
         </div>
         <div>
-          <label className="block text-sm text-[var(--text-secondary)] mb-1.5">发布平台</label>
+          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+            📱 发布平台
+          </label>
           <input
             value={platform} onChange={(e) => setPlatform(e.target.value)}
             placeholder="如：小红书"
-            className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-active)] transition-colors"
+            className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
           />
         </div>
       </div>
       <div>
-        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">文案风格</label>
+        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+          🎭 文案风格
+        </label>
         <div className="flex flex-wrap gap-2">
           {[{v:'professional',l:'专业'},{v:'friendly',l:'友好'},{v:'creative',l:'创意'},{v:'persuasive',l:'说服'},{v:'humorous',l:'幽默'}].map((opt) => (
             <button
               key={opt.v}
               type="button"
               onClick={() => setTone(opt.v)}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                tone === opt.v ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white' : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
+              className="px-4 py-1.5 text-sm transition-all duration-100"
+              style={{
+                fontFamily: 'var(--font-display)',
+                letterSpacing: '0.02em',
+                border: '3px solid #1A1A1A',
+                background: tone === opt.v ? 'var(--accent-primary)' : '#FFFFFF',
+                color: tone === opt.v ? '#FFFFFF' : '#1A1A1A',
+                boxShadow: tone === opt.v ? '3px 3px 0px #1A1A1A' : '2px 2px 0px #1A1A1A',
+                transform: tone === opt.v ? 'translate(-1px, -1px)' : 'none',
+              }}
             >
               {opt.l}
             </button>
@@ -260,10 +364,14 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
       </div>
       <button
         type="submit"
-        className="w-full h-11 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:brightness-110 active:translate-y-[1px]"
-        style={{ background: 'var(--gradient-cta)' }}
+        className="w-full h-12 text-lg font-bold text-white comic-btn active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+        style={{
+          background: 'var(--gradient-cta)',
+          border: '3px solid #1A1A1A',
+          boxShadow: '4px 4px 0px #1A1A1A',
+        }}
       >
-        生成文案
+        ⚡ 生成文案！
       </button>
     </form>
   )
@@ -326,13 +434,13 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
   }
 
   const sizeOptions = [
-    { v: '1024x1024', l: '1024×1024 (1:1 方形)' },
-    { v: '1024x1792', l: '1024×1792 (9:16 竖版)' },
-    { v: '1792x1024', l: '1792×1024 (16:9 横版)' },
-    { v: '768x1024', l: '768×1024 (3:4 竖版)' },
-    { v: '1024x768', l: '1024×768 (4:3 横版)' },
-    { v: '576x1024', l: '576×1024 (9:16 竖版)' },
-    { v: '1024x576', l: '1024×576 (16:9 横版)' },
+    { v: '1024x1024', l: '1024×1024 (1:1)' },
+    { v: '1024x1792', l: '1024×1792 (9:16)' },
+    { v: '1792x1024', l: '1792×1024 (16:9)' },
+    { v: '768x1024', l: '768×1024 (3:4)' },
+    { v: '1024x768', l: '1024×768 (4:3)' },
+    { v: '576x1024', l: '576×1024 (9:16)' },
+    { v: '1024x576', l: '1024×576 (16:9)' },
   ]
   const styleOptions = [
     { v: 'realistic', l: '写实' },
@@ -346,30 +454,41 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">提示词</label>
+        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+          ✨ 提示词
+        </label>
         <textarea
           value={prompt} onChange={(e) => setPrompt(e.target.value)}
           placeholder="描述你想要生成的图片..."
           rows={4}
-          className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-active)] transition-colors resize-none"
+          className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)] resize-none"
         />
-        <div className="flex justify-between mt-1">
-          <span className="text-xs text-[var(--text-muted)]">{prompt.length}/500</span>
-          {prompt && <button type="button" onClick={() => setPrompt('')} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)]">清空</button>}
+        <div className="flex justify-between mt-1.5">
+          <span className="text-xs text-[var(--text-muted)]" style={{ fontFamily: 'var(--font-body)' }}>
+            {prompt.length}/500
+          </span>
+          {prompt && (
+            <button type="button" onClick={() => setPrompt('')} className="text-xs comic-border-sm px-2 py-0.5 bg-[var(--bg-card)]">
+              ✖ 清空
+            </button>
+          )}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">参考图片（可选 / 最多16张）</label>
+        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+          🖼️ 参考图片（可选 / 最多16张）
+        </label>
         {refImages.length > 0 ? (
           <div className="grid grid-cols-3 gap-2 mb-2">
             {refImages.map((img, i) => (
-              <div key={i} className="relative">
-                <img src={img} alt={`参考图${i + 1}`} className="w-full h-24 object-cover rounded-lg border border-[var(--border-default)]" />
+              <div key={i} className="relative comic-border-sm overflow-hidden">
+                <img src={img} alt={`参考图${i + 1}`} className="w-full h-24 object-cover" />
                 <button
                   type="button"
                   onClick={() => handleRemoveRef(i)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center text-xs hover:bg-black/80"
+                  className="absolute top-1 right-1 w-6 h-6 bg-[var(--accent-primary)] text-white flex items-center justify-center text-sm font-bold"
+                  style={{ border: '2px solid #1A1A1A', fontFamily: 'var(--font-display)' }}
                 >
                   ×
                 </button>
@@ -378,19 +497,19 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
             {refImages.length < 16 && (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="h-24 border-2 border-dashed border-[var(--border-default)] rounded-lg flex flex-col items-center justify-center text-[var(--text-muted)] hover:border-[var(--accent-primary)] hover:text-[var(--text-secondary)] transition-colors cursor-pointer"
+                className="h-24 comic-border-sm flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-[var(--bg-input)]"
               >
-                <span className="text-xl">+</span>
+                <span className="text-2xl font-bold">+</span>
               </div>
             )}
           </div>
         ) : (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-full h-24 border-2 border-dashed border-[var(--border-default)] rounded-lg flex flex-col items-center justify-center text-[var(--text-muted)] hover:border-[var(--accent-primary)] hover:text-[var(--text-secondary)] transition-colors cursor-pointer"
+            className="w-full h-24 comic-border-sm flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-[var(--bg-input)]"
           >
-            <span className="text-2xl mb-1">+</span>
-            <span className="text-xs">点击上传参考图片</span>
+            <span className="text-3xl font-bold mb-1">+</span>
+            <span className="text-xs" style={{ fontFamily: 'var(--font-body)' }}>点击上传参考图片</span>
           </div>
         )}
         <input
@@ -403,31 +522,40 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
         />
         {refImages && refImages.length > 0 && (
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-xs text-[var(--text-secondary)] shrink-0">参考强度</span>
+            <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-display)' }}>参考强度</span>
             <input
               type="range"
               min={10}
               max={100}
               value={strength}
               onChange={(e) => setStrength(Number(e.target.value))}
-              className="flex-1 accent-[var(--accent-primary)]"
+              className="flex-1 comic-range"
             />
-            <span className="text-xs text-[var(--text-muted)] w-6 text-right">{strength}%</span>
+            <span className="text-xs font-bold w-6 text-right" style={{ fontFamily: 'var(--font-display)' }}>{strength}%</span>
           </div>
         )}
       </div>
 
       <div>
-        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">风格预设</label>
+        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+          🎨 风格预设
+        </label>
         <div className="flex flex-wrap gap-2">
           {styleOptions.map((opt) => (
             <button
               key={opt.v}
               type="button"
               onClick={() => setStyle(opt.v)}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                style === opt.v ? 'bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white' : 'border-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
+              className="px-4 py-1.5 text-sm transition-all duration-100"
+              style={{
+                fontFamily: 'var(--font-display)',
+                letterSpacing: '0.02em',
+                border: '3px solid #1A1A1A',
+                background: style === opt.v ? 'var(--accent-secondary)' : '#FFFFFF',
+                color: style === opt.v ? '#FFFFFF' : '#1A1A1A',
+                boxShadow: style === opt.v ? '3px 3px 0px #1A1A1A' : '2px 2px 0px #1A1A1A',
+                transform: style === opt.v ? 'translate(-1px, -1px)' : 'none',
+              }}
             >
               {opt.l}
             </button>
@@ -437,43 +565,51 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm text-[var(--text-secondary)] mb-1.5">尺寸</label>
+          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+            📐 尺寸
+          </label>
           <select
             value={size} onChange={(e) => setSize(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-active)] transition-colors"
+            className="w-full px-4 py-2.5 comic-select bg-[var(--bg-input)] text-sm"
           >
             {sizeOptions.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm text-[var(--text-secondary)] mb-1.5">数量</label>
+          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+            🔢 数量
+          </label>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setCount(Math.max(1, count - 1))}
-              className="w-9 h-9 flex items-center justify-center bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm hover:bg-[var(--bg-hover)] transition-colors"
+              className="w-10 h-10 flex items-center justify-center text-lg font-bold bg-[var(--bg-card)] transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+              style={{ border: '3px solid #1A1A1A', boxShadow: '3px 3px 0px #1A1A1A' }}
             >−</button>
-            <span className="w-8 text-center text-sm">{count}</span>
+            <span className="w-8 text-center text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>{count}</span>
             <button
               type="button"
               onClick={() => setCount(Math.min(4, count + 1))}
-              className="w-9 h-9 flex items-center justify-center bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm hover:bg-[var(--bg-hover)] transition-colors"
+              className="w-10 h-10 flex items-center justify-center text-lg font-bold bg-[var(--bg-card)] transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+              style={{ border: '3px solid #1A1A1A', boxShadow: '3px 3px 0px #1A1A1A' }}
             >+</button>
           </div>
         </div>
       </div>
 
-      <details className="group">
-        <summary className="text-sm text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors list-none flex items-center gap-1">
-          <span className="text-xs opacity-50">▼</span>
+      <details className="comic-details bg-[var(--bg-card)]">
+        <summary className="px-4 py-3 text-sm font-bold flex items-center gap-2 cursor-pointer select-none" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+          <span className="text-xs transition-transform duration-200">▶</span>
           高级参数
         </summary>
-        <div className="mt-3 space-y-3">
+        <div className="px-4 pb-4 space-y-3 border-t-[3px] border-[#1A1A1A] pt-3">
           <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-1.5">负面提示词</label>
+            <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
+              ⛔ 负面提示词
+            </label>
             <input
               placeholder="不想出现在图片中的内容..."
-              className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-default)] rounded-lg text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--border-active)] transition-colors"
+              className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
             />
           </div>
         </div>
@@ -481,10 +617,14 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
 
       <button
         type="submit"
-        className="w-full h-11 text-sm font-semibold text-white rounded-lg transition-all duration-200 hover:brightness-110 active:translate-y-[1px]"
-        style={{ background: 'var(--gradient-cta)' }}
+        className="w-full h-12 text-lg font-bold text-white comic-btn active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+        style={{
+          background: 'var(--gradient-cta)',
+          border: '3px solid #1A1A1A',
+          boxShadow: '4px 4px 0px #1A1A1A',
+        }}
       >
-        开始生成
+        ⚡ 开始生成！
       </button>
     </form>
   )
