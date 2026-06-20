@@ -285,7 +285,11 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
         setCopywriting(`错误: ${data.error}`)
       }
     } catch (err: any) {
-      setCopywriting(`请求失败: ${err.message}`)
+      if (err.name === 'AbortError' || err.message?.includes('timed out') || err.message?.includes('timeout')) {
+        setCopywriting('⏱️ 图片生成超时。可能是图片较大或当前服务繁忙，请重试或选择较小的尺寸。')
+      } else {
+        setCopywriting(`请求失败: ${err.message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -427,7 +431,11 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
         alert(`生成失败: ${data.error}`)
       }
     } catch (err: any) {
-      alert(`请求失败: ${err.message}`)
+      if (err.name === 'AbortError' || err.message?.includes('timed out') || err.message?.includes('timeout')) {
+        alert('⏱️ 图片生成超时。可能是图片较大或当前服务繁忙，请重试或选择较小的尺寸。')
+      } else {
+        alert(`请求失败: ${err.message}`)
+      }
     } finally {
       setLoading(false)
     }
