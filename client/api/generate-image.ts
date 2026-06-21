@@ -4,7 +4,7 @@ const MANXIAOBAI_API_KEY = process.env.MANXIAOBAI_API_KEY || '';
 const MANXIAOBAI_API_URL = 'https://api.manxiaobai.online/v1/images/generations';
 
 const AGNES_API_KEY = process.env.AGNES_API_KEY || 'sk-EefVkRE4ZY9nFNeN1qYEvaLRQFuBhgr32S6AJMeTDgmAlfmD';
-const AGNES_API_URL = 'https://pihub.agnesai.com/v1/images/generations';
+const AGNES_API_URL = 'https://apihub.agnes-ai.com/v1/images/generations';
 const AGNES_MODEL = 'agnes-image-2.1-flash';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
