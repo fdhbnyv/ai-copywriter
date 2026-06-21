@@ -4,7 +4,7 @@ const MANXIAOBAI_API_KEY = process.env.MANXIAOBAI_API_KEY || '';
 const MANXIAOBAI_API_URL = 'https://api.manxiaobai.online/v1/images/generations';
 
 const AGNES_API_KEY = process.env.AGNES_API_KEY || 'sk-EefVkRE4ZY9nFNeN1qYEvaLRQFuBhgr32S6AJMeTDgmAlfmD';
-const AGNES_API_URL = 'https://pihub.agnes-ai.com/v1/images/generations';
+const AGNES_API_URL = 'https://pihub.agnesai.com/v1/images/generations';
 const AGNES_MODEL = 'agnes-image-2.1-flash';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -98,6 +98,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ images: result.data || [], model: 'premium' });
   } catch (error) {
     const message = error instanceof Error ? error.message : '图片生成失败';
-    return res.status(500).json({ error: message });
+    if (message.includes('timeout') || message.includes('Timeout') || message.includes('timed out') || message.includes('aborted') || message.includes('ENOTFOUND') || message.includes('getaddrinfo')) {
+      return res.status(504).json({ error: `请求失败(超时): 请检查网络或稍后重试`, detail: message });
+    }
+    return res.status(500).json({ error: `图片生成失败: ${message}` });
   }
 }
