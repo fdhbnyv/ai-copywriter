@@ -303,6 +303,14 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
   const [strength, setStrength] = useState(70)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Reset to supported sizes when switching models
+  const freeSizes = ['1024x1024', '1024x1792', '1792x1024']
+  useEffect(() => {
+    if (model === 'free' && !freeSizes.includes(size)) {
+      setSize('1024x1024')
+    }
+  }, [model])
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
@@ -361,7 +369,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
     }
   }
 
-  const sizeOptions = [
+  const premiumSizeOptions = [
     { v: '1024x1024', l: '1024x1024 (1:1)' },
     { v: '1536x1024', l: '1536x1024 (3:2)' },
     { v: '1024x1536', l: '1024x1536 (2:3)' },
@@ -371,6 +379,12 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
     { v: '1024x1360', l: '1024x1360 (3:4)' },
     { v: '2384x1024', l: '2384x1024 (21:9)' },
   ]
+  const freeSizeOptions = [
+    { v: '1024x1024', l: '1024x1024 (1:1)' },
+    { v: '1024x1792', l: '1024x1792 (9:16)' },
+    { v: '1792x1024', l: '1792x1024 (16:9)' },
+  ]
+  const sizeOptions = model === 'premium' ? premiumSizeOptions : freeSizeOptions
   const styleOptions = [
     { v: 'realistic', l: '写实' },
     { v: 'anime', l: '动漫' },
