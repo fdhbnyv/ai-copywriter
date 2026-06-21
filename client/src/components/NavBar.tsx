@@ -1,24 +1,38 @@
 import { Link, useLocation } from 'react-router-dom'
 
 const navItems = [
-  { path: '/', label: '创作', icon: '✏️' },
-  { path: '/portfolio', label: '作品集', icon: '🎨' },
-  { path: '/inspiration', label: '灵感', icon: '💡' },
+  { path: '/', label: '创作', icon: '✨' },
+  { path: '/portfolio', label: '作品集', icon: '🖼️' },
+  { path: '/inspiration', label: '灵感库', icon: '💡' },
 ]
 
 export default function NavBar() {
   const location = useLocation()
 
   return (
-    <nav className="h-16 flex items-center justify-between px-6 bg-[var(--bg-card)] border-b-[3px] border-[#1A1A1A] shadow-[0_4px_0px_#1A1A1A] relative z-10">
+    <nav
+      className="h-16 flex items-center justify-between px-6 sticky top-0 z-50"
+      style={{
+        background: 'rgba(10, 10, 15, 0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+      }}
+    >
       <div className="flex items-center gap-8">
         <Link
           to="/"
-          className="text-2xl tracking-wider text-[var(--accent-primary)] drop-shadow-[2px_2px_0px_#1A1A1A]"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-xl font-bold tracking-tight"
+          style={{
+            fontFamily: 'var(--font-display)',
+            background: 'linear-gradient(135deg, #F472B6, #FB923C)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
         >
           ImagineForge
         </Link>
+
         <div className="flex items-center gap-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
@@ -26,18 +40,13 @@ export default function NavBar() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`relative px-5 py-2 text-base transition-all duration-100 ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
-                }`}
+                className="px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200"
                 style={{
                   fontFamily: 'var(--font-display)',
-                  letterSpacing: '0.03em',
-                  border: isActive ? '3px solid #1A1A1A' : '3px solid transparent',
-                  background: isActive ? 'var(--accent-primary)' : 'transparent',
-                  boxShadow: isActive ? '4px 4px 0px #1A1A1A' : 'none',
-                  transform: isActive ? 'translate(-1px, -1px)' : 'none',
+                  background: isActive ? 'rgba(244, 114, 182, 0.15)' : 'transparent',
+                  border: isActive ? '1px solid rgba(244, 114, 182, 0.2)' : '1px solid transparent',
+                  color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)',
+                  backdropFilter: isActive ? 'blur(12px)' : 'none',
                 }}
               >
                 {item.icon} {item.label}
@@ -46,26 +55,27 @@ export default function NavBar() {
           })}
         </div>
       </div>
-      <div className="flex items-center gap-4">
+
+      <div className="flex items-center gap-3">
         <div
-          className="flex items-center gap-2 px-4 py-1.5 text-sm"
+          className="flex items-center gap-2 px-4 py-1.5 text-sm rounded-xl"
           style={{
             fontFamily: 'var(--font-display)',
-            border: '3px solid #1A1A1A',
-            background: 'linear-gradient(135deg, #FFEAA7, #FFD93D)',
-            boxShadow: '3px 3px 0px #1A1A1A',
+            background: 'rgba(255, 255, 255, 0.05)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            color: 'rgba(255, 255, 255, 0.7)',
           }}
         >
-          <span className="text-lg">⭐</span>
-          50 积分
+          <span style={{ color: 'var(--accent-warning)' }}>✦</span>
+          50
         </div>
         <div
-          className="w-10 h-10 flex items-center justify-center text-lg font-bold text-white transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-semibold text-white"
           style={{
             fontFamily: 'var(--font-display)',
-            border: '3px solid #1A1A1A',
-            background: 'var(--accent-secondary)',
-            boxShadow: '3px 3px 0px #1A1A1A',
+            background: 'linear-gradient(135deg, #F472B6, #FB923C)',
+            boxShadow: '0 4px 15px rgba(244, 114, 182, 0.3)',
           }}
         >
           U

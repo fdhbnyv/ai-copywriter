@@ -41,48 +41,45 @@ export default function CreationPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] bg-[var(--bg-primary)]">
-      {/* 左侧面板 — 漫画风 */}
-      <aside className="w-full lg:w-[420px] xl:w-[460px] shrink-0 border-r-[3px] border-[#1A1A1A] p-5 overflow-y-auto bg-[var(--bg-card)]">
-        <h2
-          className="text-2xl mb-5 text-[var(--accent-primary)] flex items-center gap-2"
-          style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.03em', textShadow: '2px 2px 0px rgba(26,26,26,0.2)' }}
-        >
-          <span>⚡</span> 生成控制台
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)]">
+      {/* Left Panel — Glass */}
+      <aside
+        className="w-full lg:w-[400px] xl:w-[440px] shrink-0 p-5 overflow-y-auto"
+        style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(12px)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+        }}
+      >
+        <h2 className="text-lg font-semibold mb-5 flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <span>✨</span> 生成控制台
         </h2>
 
-        {/* 模式切换 — 漫画式 tab */}
-        <div className="flex gap-1 mb-5 p-1" style={{ border: '3px solid #1A1A1A', background: '#FFEAA7', boxShadow: '3px 3px 0px #1A1A1A' }}>
-          <button
-            onClick={() => setMode('text')}
-            className="flex-1 py-2.5 text-base transition-all duration-100"
-            style={{
-              fontFamily: 'var(--font-display)',
-              letterSpacing: '0.02em',
-              border: mode === 'text' ? '3px solid #1A1A1A' : '3px solid transparent',
-              background: mode === 'text' ? 'var(--accent-primary)' : 'transparent',
-              color: mode === 'text' ? '#FFFFFF' : '#1A1A1A',
-              boxShadow: mode === 'text' ? '3px 3px 0px #1A1A1A' : 'none',
-              transform: mode === 'text' ? 'translate(-1px, -1px)' : 'none',
-            }}
-          >
-            ✏️ 文案生成
-          </button>
-          <button
-            onClick={() => setMode('image')}
-            className="flex-1 py-2.5 text-base transition-all duration-100"
-            style={{
-              fontFamily: 'var(--font-display)',
-              letterSpacing: '0.02em',
-              border: mode === 'image' ? '3px solid #1A1A1A' : '3px solid transparent',
-              background: mode === 'image' ? 'var(--accent-primary)' : 'transparent',
-              color: mode === 'image' ? '#FFFFFF' : '#1A1A1A',
-              boxShadow: mode === 'image' ? '3px 3px 0px #1A1A1A' : 'none',
-              transform: mode === 'image' ? 'translate(-1px, -1px)' : 'none',
-            }}
-          >
-            🎨 图片生成
-          </button>
+        {/* Mode Toggle — Glass */}
+        <div
+          className="flex gap-1 mb-5 p-1 rounded-xl"
+          style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+          }}
+        >
+          {(['text', 'image'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className="flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200"
+              style={{
+                fontFamily: 'var(--font-display)',
+                background: mode === m ? 'rgba(244, 114, 182, 0.2)' : 'transparent',
+                border: mode === m ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid transparent',
+                color: mode === m ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)',
+                backdropFilter: mode === m ? 'blur(12px)' : 'none',
+                boxShadow: mode === m ? '0 0 20px rgba(244, 114, 182, 0.1)' : 'none',
+              }}
+            >
+              {m === 'text' ? '✍️ 文案生成' : '🎨 图片生成'}
+            </button>
+          ))}
         </div>
 
         <div className="space-y-4">
@@ -93,31 +90,22 @@ export default function CreationPage() {
         </div>
       </aside>
 
-      {/* 右侧主内容区 — 漫画风 */}
-      <main className="flex-1 p-6 overflow-y-auto bg-[var(--bg-primary)] bg-comic-dots-light">
+      {/* Main Content — Background gradient */}
+      <main className="flex-1 p-6 overflow-y-auto" style={{ background: 'var(--bg-primary)' }}>
         {mode === 'text' ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             {loading ? (
-              <div className="flex flex-col items-center gap-5">
-                <div className="relative">
-                  <div className="w-20 h-20 border-[4px] border-[#1A1A1A] border-t-[var(--accent-primary)] animate-comic-spin rounded-full" />
-                  <span className="absolute inset-0 flex items-center justify-center text-2xl">✏️</span>
-                </div>
-                <p
-                  className="text-lg animate-comic-pulse"
-                  style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-primary)' }}
-                >
-                  AI 正在构思中...
+              <div className="flex flex-col items-center gap-5 glass-fade-in">
+                <div className="glass-spinner w-14 h-14" />
+                <p className="text-base glass-pulse" style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-pink)' }}>
+                  AI 正在构思文案...
                 </p>
               </div>
             ) : copywriting ? (
-              <div className="w-full max-w-2xl">
+              <div className="w-full max-w-2xl glass-fade-in">
                 <div className="flex items-center justify-between mb-4">
-                  <h3
-                    className="text-xl flex items-center gap-2"
-                    style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
-                  >
-                    <span>📝</span> 生成结果
+                  <h3 className="text-lg font-semibold flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                    📝 生成结果
                   </h3>
                   <button
                     onClick={() => {
@@ -125,39 +113,34 @@ export default function CreationPage() {
                       setCopied(true)
                       setTimeout(() => setCopied(false), 2000)
                     }}
-                    className="comic-btn px-5 py-2 text-sm bg-[var(--accent-success)] text-white"
+                    className="glass-btn-secondary px-4 py-2 text-sm rounded-xl"
                   >
-                    {copied ? '✓ 复制成功!' : '📋 复制文案'}
+                    {copied ? '✓ 复制成功' : '📋 复制文案'}
                   </button>
                 </div>
-                <div
-                  className="comic-card p-5 text-left whitespace-pre-wrap leading-relaxed text-base bg-[var(--bg-card)]"
-                  style={{ minHeight: '120px' }}
-                >
+                <div className="glass-card p-5 text-left whitespace-pre-wrap leading-relaxed text-sm rounded-xl">
                   {copywriting}
                 </div>
                 {copyHistory.length > 0 && (
                   <div className="mt-6">
-                    <h4
-                      className="text-base mb-3 flex items-center gap-2"
-                      style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
-                    >
-                      <span>📚</span> 历史记录 ({copyHistory.length})
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                      📚 历史记录 ({copyHistory.length})
                     </h4>
                     <div className="space-y-2">
                       {copyHistory.map((item, idx) => (
                         <button
                           key={item.time}
                           onClick={() => setCopywriting(item.text)}
-                          className="w-full text-left p-3 comic-border-sm transition-all duration-100 hover:translate-x-[1px] hover:translate-y-[1px]"
+                          className="w-full text-left p-3 rounded-xl transition-all duration-200"
                           style={{
-                            background: idx === 0 ? '#FFEAA7' : '#FFFFFF',
+                            background: idx === 0 ? 'rgba(244, 114, 182, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                            border: idx === 0 ? '1px solid rgba(244, 114, 182, 0.15)' : '1px solid rgba(255, 255, 255, 0.05)',
                           }}
                         >
-                          <div className="text-xs text-[var(--text-muted)] mb-1" style={{ fontFamily: 'var(--font-body)' }}>
+                          <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
                             🏷️ {item.product} · {new Date(item.time).toLocaleString('zh-CN')}
                           </div>
-                          <div className="text-sm text-[var(--text-secondary)] truncate">{item.text.slice(0, 80)}...</div>
+                          <div className="text-sm truncate" style={{ color: 'var(--text-secondary)' }}>{item.text.slice(0, 80)}...</div>
                         </button>
                       ))}
                     </div>
@@ -165,38 +148,31 @@ export default function CreationPage() {
                 )}
               </div>
             ) : (
-              <div className="text-[var(--text-muted)]">
-                <div className="text-7xl mb-4 animate-comic-bounce">✏️</div>
-                <p className="text-xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+              <div className="glass-fade-in" style={{ color: 'var(--text-muted)' }}>
+                <div className="text-6xl mb-4 opacity-40">✍️</div>
+                <p className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
                   输入产品信息，开始创作文案
                 </p>
-                <p className="text-base mt-2 text-[var(--text-secondary)]">AI 将根据你的需求生成营销文案</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
+                  AI 将根据你的需求生成营销文案
+                </p>
               </div>
             )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center">
             {loading ? (
-              <div className="flex flex-col items-center gap-5">
-                <div className="relative">
-                  <div className="w-20 h-20 border-[4px] border-[#1A1A1A] border-t-[var(--accent-primary)] animate-comic-spin rounded-full" />
-                  <span className="absolute inset-0 flex items-center justify-center text-2xl">🎨</span>
-                </div>
-                <p
-                  className="text-lg animate-comic-pulse"
-                  style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-primary)' }}
-                >
+              <div className="flex flex-col items-center gap-5 glass-fade-in">
+                <div className="glass-spinner w-14 h-14" />
+                <p className="text-base glass-pulse" style={{ fontFamily: 'var(--font-display)', color: 'var(--accent-pink)' }}>
                   AI 正在绘制中...
                 </p>
               </div>
             ) : imageUrl ? (
-              <div className="w-full max-w-2xl">
+              <div className="w-full max-w-2xl glass-fade-in">
                 <div className="flex items-center justify-between mb-4">
-                  <h3
-                    className="text-xl flex items-center gap-2"
-                    style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
-                  >
-                    <span>🖼️</span> 生成结果
+                  <h3 className="text-lg font-semibold flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
+                    🖼️ 生成结果
                   </h3>
                   <button
                     onClick={() => {
@@ -205,39 +181,33 @@ export default function CreationPage() {
                       link.download = `ai-${Date.now()}.png`
                       link.click()
                     }}
-                    className="comic-btn px-5 py-2 text-sm bg-[var(--accent-secondary)] text-white"
+                    className="glass-btn-secondary px-4 py-2 text-sm rounded-xl"
                   >
                     ⬇️ 下载
                   </button>
                 </div>
-                <div className="comic-card p-2 bg-[var(--bg-card)]">
-                  <img src={imageUrl} alt="生成的图片" className="w-full border-2 border-[#1A1A1A]" />
+                <div className="glass-card p-2 rounded-xl">
+                  <img src={imageUrl} alt="生成的图片" className="w-full rounded-lg" />
                 </div>
                 {imageHistory.length > 0 && (
                   <div className="mt-6">
-                    <h4
-                      className="text-base mb-3 flex items-center gap-2"
-                      style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}
-                    >
-                      <span>🖼️</span> 历史记录 ({imageHistory.length})
+                    <h4 className="text-sm font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                      🖼️ 历史记录 ({imageHistory.length})
                     </h4>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                       {imageHistory.map((item) => (
                         <button
                           key={item.time}
                           onClick={() => setImageUrl(item.url)}
-                          className="relative group comic-border-sm overflow-hidden transition-all duration-100 hover:translate-x-[1px] hover:translate-y-[1px]"
+                          className="glass-card rounded-xl overflow-hidden transition-all duration-200"
                           style={{
-                            background: '#FFFFFF',
-                            borderColor: item.url === imageUrl ? 'var(--accent-primary)' : '#1A1A1A',
-                            boxShadow: item.url === imageUrl ? '3px 3px 0px var(--accent-primary)' : '3px 3px 0px #1A1A1A',
+                            borderColor: item.url === imageUrl ? 'rgba(244, 114, 182, 0.4)' : undefined,
+                            boxShadow: item.url === imageUrl ? '0 0 20px rgba(244, 114, 182, 0.15)' : undefined,
                           }}
                         >
-                          <img src={item.url} alt="" className="w-full aspect-square object-cover border-b-2 border-[#1A1A1A]" />
+                          <img src={item.url} alt="" className="w-full aspect-square object-cover" />
                           <div className="p-1.5">
-                            <span className="text-[10px] text-[var(--text-muted)] truncate block" style={{ fontFamily: 'var(--font-body)' }}>
-                              {item.prompt}
-                            </span>
+                            <span className="text-[10px] truncate block" style={{ color: 'var(--text-muted)' }}>{item.prompt}</span>
                           </div>
                         </button>
                       ))}
@@ -246,12 +216,14 @@ export default function CreationPage() {
                 )}
               </div>
             ) : (
-              <div className="text-[var(--text-muted)]">
-                <div className="text-7xl mb-4 animate-comic-bounce">🎨</div>
-                <p className="text-xl font-bold text-[var(--text-primary)]" style={{ fontFamily: 'var(--font-display)' }}>
+              <div className="glass-fade-in" style={{ color: 'var(--text-muted)' }}>
+                <div className="text-6xl mb-4 opacity-40">🎨</div>
+                <p className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
                   输入提示词，开始生成图片
                 </p>
-                <p className="text-base mt-2 text-[var(--text-secondary)]">AI 将把你的创意变成视觉作品</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
+                  AI 将把你的创意变成视觉作品
+                </p>
               </div>
             )}
           </div>
@@ -288,7 +260,7 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
       }
     } catch (err: any) {
       if (err.name === 'AbortError' || err.message?.includes('timed out') || err.message?.includes('timeout')) {
-        setCopywriting('⏱️ 图片生成超时。可能是图片较大或当前服务繁忙，请重试或选择较小的尺寸。')
+        setCopywriting('⏱️ 生成超时，请重试')
       } else {
         setCopywriting(`请求失败: ${err.message}`)
       }
@@ -300,51 +272,51 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-          🏷️ 产品名称
+        <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+          产品名称
         </label>
         <input
           value={product} onChange={(e) => setProduct(e.target.value)}
           placeholder="例如：无线蓝牙耳机"
-          className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
+          className="w-full px-4 py-2.5 glass-input rounded-xl text-sm"
         />
       </div>
       <div>
-        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-          ⭐ 产品特点
+        <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+          产品特点
         </label>
         <textarea
           value={features} onChange={(e) => setFeatures(e.target.value)}
           placeholder="描述核心卖点..."
           rows={3}
-          className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)] resize-none"
+          className="w-full px-4 py-2.5 glass-input rounded-xl text-sm resize-none"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-            👥 目标群体
+          <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+            目标群体
           </label>
           <input
             value={audience} onChange={(e) => setAudience(e.target.value)}
             placeholder="如：年轻人"
-            className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
+            className="w-full px-4 py-2.5 glass-input rounded-xl text-sm"
           />
         </div>
         <div>
-          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-            📱 发布平台
+          <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+            发布平台
           </label>
           <input
             value={platform} onChange={(e) => setPlatform(e.target.value)}
             placeholder="如：小红书"
-            className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
+            className="w-full px-4 py-2.5 glass-input rounded-xl text-sm"
           />
         </div>
       </div>
       <div>
-        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-          🎭 文案风格
+        <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+          文案风格
         </label>
         <div className="flex flex-wrap gap-2">
           {[{v:'professional',l:'专业'},{v:'friendly',l:'友好'},{v:'creative',l:'创意'},{v:'persuasive',l:'说服'},{v:'humorous',l:'幽默'}].map((opt) => (
@@ -352,15 +324,12 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
               key={opt.v}
               type="button"
               onClick={() => setTone(opt.v)}
-              className="px-4 py-1.5 text-sm transition-all duration-100"
+              className="px-3 py-1.5 text-xs font-medium rounded-xl transition-all duration-200"
               style={{
-                fontFamily: 'var(--font-display)',
-                letterSpacing: '0.02em',
-                border: '3px solid #1A1A1A',
-                background: tone === opt.v ? 'var(--accent-primary)' : '#FFFFFF',
-                color: tone === opt.v ? '#FFFFFF' : '#1A1A1A',
-                boxShadow: tone === opt.v ? '3px 3px 0px #1A1A1A' : '2px 2px 0px #1A1A1A',
-                transform: tone === opt.v ? 'translate(-1px, -1px)' : 'none',
+                background: tone === opt.v ? 'rgba(244, 114, 182, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                border: tone === opt.v ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid rgba(255, 255, 255, 0.06)',
+                color: tone === opt.v ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)',
+                backdropFilter: tone === opt.v ? 'blur(8px)' : 'none',
               }}
             >
               {opt.l}
@@ -370,14 +339,9 @@ function CopywritingForm({ setCopywriting, setLoading, onGenerated }: { setCopyw
       </div>
       <button
         type="submit"
-        className="w-full h-12 text-lg font-bold text-white comic-btn active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-        style={{
-          background: 'var(--gradient-cta)',
-          border: '3px solid #1A1A1A',
-          boxShadow: '4px 4px 0px #1A1A1A',
-        }}
+        className="glass-btn w-full h-11 text-sm font-semibold rounded-xl"
       >
-        ⚡ 生成文案！
+        ✨ 生成文案
       </button>
     </form>
   )
@@ -434,7 +398,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
       }
     } catch (err: any) {
       if (err.name === 'AbortError' || err.message?.includes('timed out') || err.message?.includes('timeout')) {
-        alert('⏱️ 图片生成超时。可能是图片较大或当前服务繁忙，请重试或选择较小的尺寸。')
+        alert('⏱️ 图片生成超时，请重试或选择较小的尺寸')
       } else {
         alert(`请求失败: ${err.message}`)
       }
@@ -465,41 +429,43 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-          ✨ 提示词
+        <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+          提示词
         </label>
         <textarea
           value={prompt} onChange={(e) => setPrompt(e.target.value)}
           placeholder="描述你想要生成的图片..."
           rows={4}
-          className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)] resize-none"
+          className="w-full px-4 py-2.5 glass-input rounded-xl text-sm resize-none"
         />
         <div className="flex justify-between mt-1.5">
-          <span className="text-xs text-[var(--text-muted)]" style={{ fontFamily: 'var(--font-body)' }}>
-            {prompt.length}/500
-          </span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{prompt.length}/500</span>
           {prompt && (
-            <button type="button" onClick={() => setPrompt('')} className="text-xs comic-border-sm px-2 py-0.5 bg-[var(--bg-card)]">
-              ✖ 清空
+            <button type="button" onClick={() => setPrompt('')} className="text-xs glass-btn-secondary px-2 py-0.5 rounded-lg">
+              清空
             </button>
           )}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-          🖼️ 参考图片（可选 / 最多16张）
+        <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+          参考图片（可选 / 最多16张）
         </label>
         {refImages.length > 0 ? (
           <div className="grid grid-cols-3 gap-2 mb-2">
             {refImages.map((img, i) => (
-              <div key={i} className="relative comic-border-sm overflow-hidden">
+              <div key={i} className="relative glass rounded-lg overflow-hidden">
                 <img src={img} alt={`参考图${i + 1}`} className="w-full h-24 object-cover" />
                 <button
                   type="button"
                   onClick={() => handleRemoveRef(i)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-[var(--accent-primary)] text-white flex items-center justify-center text-sm font-bold"
-                  style={{ border: '2px solid #1A1A1A', fontFamily: 'var(--font-display)' }}
+                  className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center text-xs font-bold rounded-full"
+                  style={{
+                    background: 'rgba(244, 114, 182, 0.8)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                  }}
                 >
                   ×
                 </button>
@@ -508,48 +474,36 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
             {refImages.length < 16 && (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="h-24 comic-border-sm flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-[var(--bg-input)]"
+                className="h-24 glass rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-200"
+                style={{ border: '1px dashed rgba(255, 255, 255, 0.15)' }}
               >
-                <span className="text-2xl font-bold">+</span>
+                <span className="text-xl opacity-50">+</span>
               </div>
             )}
           </div>
         ) : (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="w-full h-24 comic-border-sm flex flex-col items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-[var(--bg-input)]"
+            className="w-full h-24 glass rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-200"
+            style={{ border: '1px dashed rgba(255, 255, 255, 0.15)' }}
           >
-            <span className="text-3xl font-bold mb-1">+</span>
-            <span className="text-xs" style={{ fontFamily: 'var(--font-body)' }}>点击上传参考图片</span>
+            <span className="text-2xl mb-1 opacity-50">+</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>点击上传参考图片</span>
           </div>
         )}
-        <input
-          type="file"
-          ref={fileInputRef}
-          accept="image/*"
-          multiple
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        {refImages && refImages.length > 0 && (
+        <input type="file" ref={fileInputRef} accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+        {refImages.length > 0 && (
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-xs font-bold" style={{ fontFamily: 'var(--font-display)' }}>参考强度</span>
-            <input
-              type="range"
-              min={10}
-              max={100}
-              value={strength}
-              onChange={(e) => setStrength(Number(e.target.value))}
-              className="flex-1 comic-range"
-            />
-            <span className="text-xs font-bold w-6 text-right" style={{ fontFamily: 'var(--font-display)' }}>{strength}%</span>
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>参考强度</span>
+            <input type="range" min={10} max={100} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="flex-1 glass-range" />
+            <span className="text-xs w-6 text-right" style={{ color: 'var(--text-muted)' }}>{strength}%</span>
           </div>
         )}
       </div>
 
       <div>
-        <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-          🎨 风格预设
+        <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+          风格预设
         </label>
         <div className="flex flex-wrap gap-2">
           {styleOptions.map((opt) => (
@@ -557,15 +511,12 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
               key={opt.v}
               type="button"
               onClick={() => setStyle(opt.v)}
-              className="px-4 py-1.5 text-sm transition-all duration-100"
+              className="px-3 py-1.5 text-xs font-medium rounded-xl transition-all duration-200"
               style={{
-                fontFamily: 'var(--font-display)',
-                letterSpacing: '0.02em',
-                border: '3px solid #1A1A1A',
-                background: style === opt.v ? 'var(--accent-secondary)' : '#FFFFFF',
-                color: style === opt.v ? '#FFFFFF' : '#1A1A1A',
-                boxShadow: style === opt.v ? '3px 3px 0px #1A1A1A' : '2px 2px 0px #1A1A1A',
-                transform: style === opt.v ? 'translate(-1px, -1px)' : 'none',
+                background: style === opt.v ? 'rgba(244, 114, 182, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                border: style === opt.v ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid rgba(255, 255, 255, 0.06)',
+                color: style === opt.v ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)',
+                backdropFilter: style === opt.v ? 'blur(8px)' : 'none',
               }}
             >
               {opt.l}
@@ -576,66 +527,50 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-            📐 尺寸
+          <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+            尺寸
           </label>
-          <select
-            value={size} onChange={(e) => setSize(e.target.value)}
-            className="w-full px-4 py-2.5 comic-select bg-[var(--bg-input)] text-sm"
-          >
+          <select value={size} onChange={(e) => setSize(e.target.value)} className="w-full px-4 py-2.5 glass-select rounded-xl text-sm">
             {sizeOptions.map((s) => <option key={s.v} value={s.v}>{s.l}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-            🔢 数量
+          <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+            数量
           </label>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setCount(Math.max(1, count - 1))}
-              className="w-10 h-10 flex items-center justify-center text-lg font-bold bg-[var(--bg-card)] transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-              style={{ border: '3px solid #1A1A1A', boxShadow: '3px 3px 0px #1A1A1A' }}
+              className="w-9 h-9 flex items-center justify-center glass-btn-secondary rounded-xl text-sm"
             >−</button>
-            <span className="w-8 text-center text-lg font-bold" style={{ fontFamily: 'var(--font-display)' }}>{count}</span>
+            <span className="w-8 text-center text-sm font-semibold">{count}</span>
             <button
               type="button"
               onClick={() => setCount(Math.min(4, count + 1))}
-              className="w-10 h-10 flex items-center justify-center text-lg font-bold bg-[var(--bg-card)] transition-all duration-100 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-              style={{ border: '3px solid #1A1A1A', boxShadow: '3px 3px 0px #1A1A1A' }}
+              className="w-9 h-9 flex items-center justify-center glass-btn-secondary rounded-xl text-sm"
             >+</button>
           </div>
         </div>
       </div>
 
-      <details className="comic-details bg-[var(--bg-card)]">
-        <summary className="px-4 py-3 text-sm font-bold flex items-center gap-2 cursor-pointer select-none" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-          <span className="text-xs transition-transform duration-200">▶</span>
+      <details className="glass-details rounded-xl">
+        <summary className="flex items-center gap-2 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-[10px] transition-transform duration-200">▸</span>
           高级参数
         </summary>
-        <div className="px-4 pb-4 space-y-3 border-t-[3px] border-[#1A1A1A] pt-3">
-          <div>
-            <label className="block text-sm mb-1.5 font-bold" style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.02em' }}>
-              ⛔ 负面提示词
+        <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="pt-3">
+            <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+              负面提示词
             </label>
-            <input
-              placeholder="不想出现在图片中的内容..."
-              className="w-full px-4 py-2.5 comic-input bg-[var(--bg-input)]"
-            />
+            <input placeholder="不想出现在图片中的内容..." className="w-full px-4 py-2.5 glass-input rounded-xl text-sm" />
           </div>
         </div>
       </details>
 
-      <button
-        type="submit"
-        className="w-full h-12 text-lg font-bold text-white comic-btn active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-        style={{
-          background: 'var(--gradient-cta)',
-          border: '3px solid #1A1A1A',
-          boxShadow: '4px 4px 0px #1A1A1A',
-        }}
-      >
-        ⚡ 开始生成！
+      <button type="submit" className="glass-btn w-full h-11 text-sm font-semibold rounded-xl">
+        ✨ 开始生成
       </button>
     </form>
   )
