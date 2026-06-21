@@ -334,7 +334,15 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(hasRefImages ? { prompt, size, count, style, refImages, model } : { prompt, size, count, style, model }),
       })
-      const data = await res.json()
+      let data: any
+      try {
+        data = await res.json()
+      } catch {
+        const text = await res.text().catch(() => '')
+        alert('服务器返回异常: ' + (text || res.status + ' ' + res.statusText))
+        setLoading(false)
+        return
+      }
       if (data.images && data.images.length > 0) {
         setImageUrl(data.images[0].url)
         onGenerated(data.images[0].url, prompt)
