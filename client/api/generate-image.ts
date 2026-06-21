@@ -24,9 +24,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // --- Free model (Agnes) ---
     if (modelChoice === 'free') {
+      const styleMap: Record<string, string> = {
+        realistic: '写实摄影风格，真实光影和质感',
+        anime: '日本动漫风格，线条清晰，色彩鲜艳',
+        pixel: '像素艺术风格，像素块清晰可见',
+        '3d': '3D渲染风格，立体感强，材质真实',
+        watercolor: '水彩画风格，柔和的色彩过渡',
+        sketch: '铅笔线稿风格，黑白素描质感',
+      };
+      const styleSuffix = style && styleMap[style] ? ` (${styleMap[style]})` : '';
+
       const body: Record<string, unknown> = {
         model: AGNES_MODEL,
-        prompt: prompt.trim(),
+        prompt: prompt.trim() + styleSuffix,
         n: Math.min(count || 1, 4),
         size: size || '1024x1024',
       };
