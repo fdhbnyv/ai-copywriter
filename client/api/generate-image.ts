@@ -3,28 +3,61 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const MANXIAOBAI_API_KEY = process.env.MANXIAOBAI_API_KEY || '';
 const MANXIAOBAI_API_URL = 'https://api.manxiaobai.online/v1/images/generations';
 
+const AGNES_API_KEY = process.env.AGNES_API_KEY || 'sk-EefVkRE4ZY9nFNeN1qYEvaLRQFuBhgr32S6AJMeTDgmAlfmD';
+const AGNES_API_URL = 'https://pihub.agnes-ai.com/v1/images/generations';
+const AGNES_MODEL = 'agnes-image-2.1-flash';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    if (!MANXIAOBAI_API_KEY) {
-      return res.status(500).json({ error: 'MANXIAOBAI_API_KEY 未配置' });
-    }
-
-    const { prompt, size, count, style, refImages } = req.body;
+    const { prompt, size, count, style, model: modelChoice = 'premium' } = req.body;
 
     if (!prompt?.trim()) {
       return res.status(400).json({ error: '请输入提示词' });
+    }
+
+    // --- Free model (Agnes) ---
+    if (modelChoice === 'free') {
+      const body: Record<string, unknown> = {
+        model: AGNES_MODEL,
+        prompt: prompt.trim(),
+        n: Math.min(count || 1, 4),
+        size: size || '1024x1024',
+      };
+
+      const response = await fetch(AGNES_API_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${AGNES_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(120000),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '{}');
+        return res.status(500).json({
+          error: `免费模型生成失败: ${errText.substring(0, 200)}`,
+          model: 'free',
+        });
+      }
+
+      const result = await response.json();
+      // The images might be in result.data or result.images depending on API format
+      const images = result.data || result.images || [];
+      return res.status(200).json({ images, model: 'free' });
+    }
+
+    // --- Premium model (Manxiaobai / GPT-Image-2) ---
+    if (!MANXIAOBAI_API_KEY) {
+      return res.status(500).json({ error: 'MANXIAOBAI_API_KEY 未配置' });
     }
 
     const styleMap: Record<string, string> = {
@@ -58,11 +91,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       const message = err.error?.message || response.statusText;
-      return res.status(500).json({ error: `图片生成失败: ${message}` });
+      return res.status(500).json({ error: `高级模型生成失败: ${message}`, model: 'premium' });
     }
 
     const result = await response.json();
-    return res.status(200).json({ images: result.data || [] });
+    return res.status(200).json({ images: result.data || [], model: 'premium' });
   } catch (error) {
     const message = error instanceof Error ? error.message : '图片生成失败';
     return res.status(500).json({ error: message });

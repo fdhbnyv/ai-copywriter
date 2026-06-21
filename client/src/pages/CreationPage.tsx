@@ -351,6 +351,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
   const [size, setSize] = useState('1024x1024')
   const [count, setCount] = useState(1)
   const [style, setStyle] = useState('realistic')
+  const [model, setModel] = useState<'premium' | 'free'>('premium')
   const [refImages, setRefImages] = useState<string[]>([])
   const [strength, setStrength] = useState(70)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -386,7 +387,7 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(hasRefImages ? { prompt, size, count, style, refImages } : { prompt, size, count, style }),
+        body: JSON.stringify(hasRefImages ? { prompt, size, count, style, refImages, model } : { prompt, size, count, style, model }),
       })
       const data = await res.json()
       if (data.images && data.images.length > 0) {
@@ -498,6 +499,49 @@ function ImageForm({ setImageUrl, setLoading, prompt, setPrompt, onGenerated }: 
             <input type="range" min={10} max={100} value={strength} onChange={(e) => setStrength(Number(e.target.value))} className="flex-1 glass-range" />
             <span className="text-xs w-6 text-right" style={{ color: 'var(--text-muted)' }}>{strength}%</span>
           </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium mb-1.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-secondary)' }}>
+          生成模型
+        </label>
+        <div className="flex gap-1 p-0.5 rounded-xl"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <button
+            type="button"
+            onClick={() => setModel('premium')}
+            className="flex-1 py-2 text-xs font-medium rounded-lg transition-all duration-200"
+            style={{
+              fontFamily: 'var(--font-display)',
+              background: model === 'premium' ? 'rgba(244, 114, 182, 0.2)' : 'transparent',
+              border: model === 'premium' ? '1px solid rgba(244, 114, 182, 0.25)' : '1px solid transparent',
+              color: model === 'premium' ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)',
+            }}>
+            ✨ 高级模型
+          </button>
+          <button
+            type="button"
+            onClick={() => setModel('free')}
+            className="flex-1 py-2 text-xs font-medium rounded-lg transition-all duration-200"
+            style={{
+              fontFamily: 'var(--font-display)',
+              background: model === 'free' ? 'rgba(52, 211, 153, 0.15)' : 'transparent',
+              border: model === 'free' ? '1px solid rgba(52, 211, 153, 0.25)' : '1px solid transparent',
+              color: model === 'free' ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)',
+            }}>
+            ⚡ 普通模型
+          </button>
+        </div>
+        {model === 'free' && (
+          <p className="text-[10px] mt-1.5" style={{ color: 'var(--accent-success)' }}>
+            ⚡ 当前使用免费模型 (Agnes Image 2.1 Flash)，无需消耗积分
+          </p>
+        )}
+        {model === 'premium' && (
+          <p className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>
+            ✨ 高级模型 (GPT Image 2)，质量更高但消耗积分
+          </p>
         )}
       </div>
 
